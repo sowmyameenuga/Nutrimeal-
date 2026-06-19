@@ -52,6 +52,8 @@ jobs:
           APK_PATH: ${{ github.workspace }}/build/app/outputs/flutter-apk/app-debug.apk
         with:
           api-level: 29
+          arch: x86_64
+          target: google_apis
           profile: Nexus 6
           script: ./NutrimealAppium/scripts/ci_run_tests.sh
 
