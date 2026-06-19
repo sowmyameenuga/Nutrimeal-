@@ -1,0 +1,70 @@
+name: Security Review Pipelines
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  security-scans:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        working-directory: ./NutrimealE2E
+        run: npm install exceljs
+
+      - name: Run Web Security Suite
+        run: |
+          node NutrimealE2E/scripts/generateWebSecuritySuite.js
+          echo "### 🛡️ Web Security Scan" >> $GITHUB_STEP_SUMMARY
+          cat NutrimealE2E/web-executive-summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Run Backend Security Suite
+        env:
+          NODE_PATH: ${{ github.workspace }}/NutrimealE2E/node_modules
+        run: |
+          node backend/scripts/generateSecuritySuite.js
+          echo "### 🛡️ Backend Security Scan" >> $GITHUB_STEP_SUMMARY
+          cat backend/executive-summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Enforce Zero-Critical Policy (Web)
+        run: |
+          CRITICAL_COUNT=$(grep -oP '(?<=Critical: )[0-9]+' NutrimealE2E/web-security-review.md)
+          if [ "$CRITICAL_COUNT" -gt "0" ]; then
+            echo "Security Gate Failed: Found $CRITICAL_COUNT critical vulnerabilities in Web!"
+            exit 1
+          else
+            echo "Security Gate Passed: 0 Critical vulnerabilities in Web."
+          fi
+
+      - name: Enforce Zero-Critical Policy (Backend)
+        run: |
+          CRITICAL_COUNT=$(grep -oP '(?<=Critical: )[0-9]+' backend/security-review.md)
+          if [ "$CRITICAL_COUNT" -gt "0" ]; then
+            echo "Security Gate Failed: Found $CRITICAL_COUNT critical vulnerabilities in Backend!"
+            exit 1
+          else
+            echo "Security Gate Passed: 0 Critical vulnerabilities in Backend."
+          fi
+
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            NutrimealE2E/*.xlsx
+            NutrimealE2E/*.md
+            backend/*.xlsx
+            backend/*.md

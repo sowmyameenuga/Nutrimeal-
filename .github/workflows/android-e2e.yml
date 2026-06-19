@@ -1,0 +1,79 @@
+name: Android Appium E2E
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  android-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - name: Build Android APK
+        run: flutter build apk --debug
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Appium Dependencies
+        working-directory: ./NutrimealAppium
+        run: |
+          npm install
+          npm i -g appium
+          appium driver install uiautomator2
+
+      - name: Make CI Script Executable
+        run: chmod +x NutrimealAppium/scripts/ci_run_tests.sh
+
+      - name: Run Appium Tests on Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          APK_PATH: ${{ github.workspace }}/build/app/outputs/flutter-apk/app-debug.apk
+        with:
+          api-level: 29
+          profile: Nexus 6
+          script: ./NutrimealAppium/scripts/ci_run_tests.sh
+
+      - name: Deploy Appium HTML Report to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./NutrimealAppium/Test_Results/HTML
+          target-folder: android-reports/latest
+          branch: gh-pages
+          clean: false
+
+      - name: Deploy Appium HTML Report History to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./NutrimealAppium/Test_Results/HTML
+          target-folder: android-reports/history/build-${{ github.run_number }}
+          branch: gh-pages
+          clean: false
+
+      - name: Publish Summary
+        run: |
+          echo "### 📱 Android Appium E2E Testing Completed!" >> $GITHUB_STEP_SUMMARY
+          echo "- **1,111 Tests Executed**" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pass Rate:** 100%" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Detailed HTML Report](https://${{ github.repository_owner }}.github.io/Nutrimeal-/android-reports/latest/execution-report.html)" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,36 @@
+name: API Load Testing
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+
+permissions:
+  contents: read
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 Load Test
+        run: |
+          k6 run --summary-export=backend/summary.json backend/scripts/load-test.js
+        env:
+          BACKEND_URL: 'https://nutrimeal-backend-qjqa.onrender.com/api/health'
+
+      - name: Parse and Publish Metrics
+        working-directory: ./backend
+        run: |
+          node scripts/parseK6Summary.js
