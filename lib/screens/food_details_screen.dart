@@ -1,0 +1,382 @@
+import 'package:flutter/material.dart';
+import '../services/meal_service.dart';
+import '../services/progress_service.dart';
+
+class FoodDetailsScreen extends StatefulWidget {
+
+  final int mealId;
+  final String title;
+  final String calories;
+  final String protein;
+  final String carbs;
+  final String fat;
+  final String? ingredients;
+  final String? healthBenefits;
+  final String? recipeSteps;
+  final String? mealType;
+
+  const FoodDetailsScreen({
+    super.key,
+    required this.mealId,
+    required this.title,
+    required this.calories,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
+    this.ingredients,
+    this.healthBenefits,
+    this.recipeSteps,
+    this.mealType,
+  });
+
+  @override
+  State<FoodDetailsScreen> createState() => _FoodDetailsScreenState();
+}
+
+class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
+  String ingredients = "Loading...";
+  String healthBenefits = "Loading...";
+  String recipeSteps = "";
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    // If details were passed directly (e.g. from Recommendations), use them
+    if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {
+      if (!mounted) return;
+      setState(() {
+        ingredients = widget.ingredients!;
+        healthBenefits = widget.healthBenefits ?? "No benefits listed";
+        recipeSteps = widget.recipeSteps ?? "";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Otherwise fetch from API (e.g. from Dashboard)
+    final response = await MealService.getMealDetails(widget.mealId);
+
+    if (!mounted) return;
+
+    if (response['statusCode'] == 200) {
+      setState(() {
+        ingredients = response['ingredients'] ?? "No ingredients listed";
+        healthBenefits = response['health_benefits'] ?? "No benefits listed";
+        recipeSteps = response['recipe_steps'] ?? "";
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        ingredients = "Could not load ingredients";
+        healthBenefits = "Could not load benefits";
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+
+        title: const Text(
+          "Food Details",
+          style: TextStyle(color: Colors.black),
+        ),
+      ),
+
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+
+            Container(
+              height: 220,
+              width: double.infinity,
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  'https://loremflickr.com/400/300/food,meal?random=${widget.mealId}',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Icon(Icons.restaurant, size: 100, color: Colors.grey));
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Text(
+              widget.title,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              widget.calories,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+
+                children: [
+
+                  nutrition("Protein", widget.protein),
+                  nutrition("Carbs", widget.carbs),
+                  nutrition("Fat", widget.fat),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            const Text(
+              "Ingredients",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            _isLoading
+                ? const CircularProgressIndicator()
+                : Text(
+                    ingredients,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+
+            const SizedBox(height: 25),
+
+            const Text(
+              "Health Benefits",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            _isLoading
+                ? const CircularProgressIndicator()
+                : Text(
+                    healthBenefits,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+
+            const SizedBox(height: 30),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+
+              child: ElevatedButton(
+                onPressed: () {
+                  // Show recipe in a bottom sheet
+                  if (recipeSteps.isNotEmpty) {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                      ),
+                      builder: (context) => Container(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Recipe: ${widget.title}",
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              recipeSteps,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                height: 1.6,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Recipe not available yet"),
+                      ),
+                    );
+                  }
+                },
+
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                ),
+
+                child: const Text(
+                  "View Recipe",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  try {
+                    final int kcal = int.parse(widget.calories.replaceAll(RegExp(r'[^0-9]'), ''));
+                    await ProgressService.logMeal(kcal);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Meal logged successfully!"), backgroundColor: Colors.green),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Could not log meal: $e")),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.check_circle, color: Colors.white),
+                label: const Text(
+                  "I Ate This!",
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  try {
+                    await MealService.saveMeal({
+                      'meal_type': widget.mealType ?? 'snack',
+                      'title': widget.title,
+                      'calories': int.parse(widget.calories.replaceAll(RegExp(r'[^0-9]'), '')),
+                      'protein': double.parse(widget.protein.replaceAll(RegExp(r'[^0-9.]'), '')),
+                      'carbs': double.parse(widget.carbs.replaceAll(RegExp(r'[^0-9.]'), '')),
+                      'fat': double.parse(widget.fat.replaceAll(RegExp(r'[^0-9.]'), '')),
+                      'ingredients': widget.ingredients ?? '',
+                      'recipe_steps': widget.recipeSteps ?? '',
+                      'health_benefits': widget.healthBenefits ?? '',
+                    });
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Meal saved to Today's Plan!"), backgroundColor: Colors.blue),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Could not save meal: $e")),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.bookmark_add, color: Colors.blue),
+                label: const Text(
+                  "Save Meal",
+                  style: TextStyle(color: Colors.blue, fontSize: 18),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.blue, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget nutrition(String label, String value) {
+    return Column(
+      children: [
+
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 5),
+
+        Text(label),
+      ],
+    );
+  }
+}
