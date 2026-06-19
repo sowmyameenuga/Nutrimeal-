@@ -40,7 +40,7 @@ jobs:
         working-directory: ./NutrimealAppium
         run: |
           npm install
-          npm i -g appium
+          npm i -g appium@next
           appium driver install uiautomator2
 
       - name: Make CI Script Executable
