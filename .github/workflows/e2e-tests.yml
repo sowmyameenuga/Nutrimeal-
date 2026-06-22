@@ -1,0 +1,76 @@
+name: E2E Automated Testing Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  run-e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🌐 Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: 📦 Install Dependencies
+        working-directory: ./e2e_tests
+        run: npm install
+
+      - name: 🚀 Run Selenium E2E Test Suite (>400 Tests)
+        working-directory: ./e2e_tests
+        env:
+          GITHUB_PAGES_URL: ${{ secrets.GITHUB_PAGES_URL }}
+          RENDER_BACKEND_URL: ${{ secrets.RENDER_BACKEND_URL }}
+        run: npm test
+
+      - name: 📤 Upload Excel Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: E2E-Test-Report
+          path: ./e2e_tests/Test_Report.xlsx
+          retention-days: 14
+
+      - name: 📊 Write Summary to GitHub Actions UI
+        if: always()
+        run: |
+          echo "## 📊 Automated Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "The Selenium E2E Mega-Suite has completed execution." >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "./e2e_tests/test-summary.json" ]; then
+            TOTAL=$(jq '.total' ./e2e_tests/test-summary.json)
+            PASSED=$(jq '.passed' ./e2e_tests/test-summary.json)
+            FAILED=$(jq '.failed' ./e2e_tests/test-summary.json)
+            
+            echo "### Overview Metrics" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total Assertions**: $TOTAL" >> $GITHUB_STEP_SUMMARY
+            echo "- **Passed**: 🟢 $PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "- **Failed**: 🔴 $FAILED" >> $GITHUB_STEP_SUMMARY
+            
+            echo "### Category Breakdown" >> $GITHUB_STEP_SUMMARY
+            echo "| Category | Passed | Failed | Total |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|--------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            
+            jq -r '.categories | to_entries[] | "| \(.key) | \(.value.passed) | \(.value.failed) | \(.value.total) |"' ./e2e_tests/test-summary.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Could not locate test-summary.json. The test suite may have crashed before finishing." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 **Download the Detailed Excel Report**: Scroll up and check the **Artifacts** section at the bottom of this run summary to download \`Test_Report.xlsx\`." >> $GITHUB_STEP_SUMMARY
