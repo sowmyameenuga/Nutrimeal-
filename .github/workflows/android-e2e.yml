@@ -47,7 +47,7 @@ jobs:
         run: chmod +x NutrimealAppium/scripts/ci_run_tests.sh
 
       - name: Run Appium Tests on Android Emulator
-        uses: reactivecircus/android-emulator-runner@v3
+        uses: reactivecircus/android-emulator-runner@v2
         env:
           APK_PATH: ${{ github.workspace }}/build/app/outputs/flutter-apk/app-debug.apk
         with:
