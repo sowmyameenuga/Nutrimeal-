@@ -1,81 +1,143 @@
-name: Android Appium E2E
+name: Android Appium E2E — 1,111 Tests
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:   # Allow manual trigger from GHA UI
 
 permissions:
-  contents: write
+  contents: write      # Needed for gh-pages deploy
+  pages: write
+  id-token: write
 
 jobs:
-  android-test:
+  android-e2e:
+    name: Build APK + Run Appium Tests (API 29 · Nexus 6)
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      # ── 2. Java 17 ───────────────────────────────────────────────────────────
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: zulu
           java-version: '17'
 
+      # ── 3. Flutter ───────────────────────────────────────────────────────────
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.x'
-          channel: 'stable'
+          channel: stable
 
-      - name: Build Android APK
-        run: flutter build apk --debug --target-platform android-x86_64
+      # ── 4. Build Debug APK via Flutter ───────────────────────────────────────
+      - name: Build Debug APK
+        run: flutter build apk --debug --target-platform android-x64
+        working-directory: ${{ github.workspace }}
 
-      - name: Setup Node.js
+      # Also expose the APK path as a step output for clarity
+      - name: Set APK_PATH env var
+        run: |
+          APK="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-debug.apk"
+          echo "APK_PATH=${APK}" >> $GITHUB_ENV
+          echo "APK located at: ${APK}"
+          ls -lh "${APK}"
+
+      # ── 5. Node.js 20 ────────────────────────────────────────────────────────
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install Appium Dependencies
-        working-directory: ./NutrimealAppium
+      # ── 6. Install Appium & Node dependencies ─────────────────────────────────
+      - name: Install Appium & WDIO dependencies
+        working-directory: ${{ github.workspace }}/NutrimealAppium
         run: |
-          npm install
-          npm i -g appium
+          npm ci --prefer-offline || npm install
+          npm install -g appium@latest
           appium driver install uiautomator2
 
-      - name: Make CI Script Executable
-        run: chmod +x NutrimealAppium/scripts/ci_run_tests.sh
+      # ── 7. Enable KVM hardware acceleration ───────────────────────────────────
+      - name: Enable KVM hardware acceleration
+        run: |
+          echo "Checking KVM availability..."
+          sudo apt-get install -y cpu-checker
+          kvm-ok || true
+          echo "Enabling KVM kernel module..."
+          sudo modprobe kvm || true
+          sudo modprobe kvm_intel || sudo modprobe kvm_amd || true
+          # Ignore KVM MSRs to avoid emulator crashes on nested virtualisation
+          echo 1 | sudo tee /sys/module/kvm/parameters/ignore_msrs || true
+          # Grant runner permission to /dev/kvm
+          sudo chmod 777 /dev/kvm || true
+          echo "KVM setup complete."
+          ls -la /dev/kvm || true
 
-      - name: Run Appium Tests on Android Emulator
+      # ── 8. Make CI script executable ─────────────────────────────────────────
+      - name: Make CI script executable
+        run: chmod +x ${{ github.workspace }}/NutrimealAppium/scripts/ci_run_tests.sh
+
+      # ── 9. Boot emulator + run Appium tests ───────────────────────────────────
+      - name: Run Appium Tests on Android Emulator (API 29 · Nexus 6)
         uses: reactivecircus/android-emulator-runner@v2
         env:
-          APK_PATH: ${{ github.workspace }}/build/app/outputs/flutter-apk/app-debug.apk
+          APK_PATH: ${{ env.APK_PATH }}
         with:
           api-level: 29
           arch: x86_64
           target: google_apis
           profile: Nexus 6
-          script: ./NutrimealAppium/scripts/ci_run_tests.sh
+          avd-name: Nutrimeal_E2E_AVD
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -no-boot-anim -gpu swiftshader_indirect
+          script: |
+            cd ${{ github.workspace }}/NutrimealAppium
+            bash scripts/ci_run_tests.sh
 
-      - name: Deploy Appium HTML Report to gh-pages
+      # ── 10. Upload Test_Results as artifact ───────────────────────────────────
+      - name: Upload Test Results Artifact
+        if: always()   # Run even if tests failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: nutrimeal-appium-results-${{ github.run_number }}
+          path: ${{ github.workspace }}/NutrimealAppium/Test_Results/
+          retention-days: 30
+
+      # ── 11. Deploy HTML report to gh-pages (latest) ───────────────────────────
+      - name: Deploy HTML Report to gh-pages (latest)
+        if: always()
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./NutrimealAppium/Test_Results/HTML
-          target-folder: android-reports/latest
+          folder: ${{ github.workspace }}/NutrimealAppium/Test_Results/HTML
+          target-folder: reports/latest
           branch: gh-pages
           clean: false
 
-      - name: Deploy Appium HTML Report History to gh-pages
+      # ── 12. Deploy HTML report to gh-pages (history) ─────────────────────────
+      - name: Deploy HTML Report to gh-pages (history)
+        if: always()
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./NutrimealAppium/Test_Results/HTML
-          target-folder: android-reports/history/build-${{ github.run_number }}
+          folder: ${{ github.workspace }}/NutrimealAppium/Test_Results/HTML
+          target-folder: reports/history/build-${{ github.run_number }}
           branch: gh-pages
           clean: false
 
-      - name: Publish Summary
+      # ── 13. GHA Step Summary ──────────────────────────────────────────────────
+      - name: Write GHA Step Summary
+        if: always()
+        working-directory: ${{ github.workspace }}/NutrimealAppium
         run: |
-          echo "### 📱 Android Appium E2E Testing Completed!" >> $GITHUB_STEP_SUMMARY
-          echo "- **1,111 Tests Executed**" >> $GITHUB_STEP_SUMMARY
-          echo "- **Pass Rate:** 100%" >> $GITHUB_STEP_SUMMARY
-          echo "- [View Detailed HTML Report](https://${{ github.repository_owner }}.github.io/Nutrimeal-/android-reports/latest/execution-report.html)" >> $GITHUB_STEP_SUMMARY
+          node utils/generateSummary.js || \
+          echo "### 📱 Android Appium E2E Completed" >> $GITHUB_STEP_SUMMARY
+          REPO_OWNER="${{ github.repository_owner }}"
+          REPO_NAME="${{ github.event.repository.name }}"
+          REPORT_URL="https://${REPO_OWNER}.github.io/${REPO_NAME}/reports/latest/execution-report.html"
+          echo "- 🔗 [View Full HTML Report](${REPORT_URL})" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 [Download XLSX Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
