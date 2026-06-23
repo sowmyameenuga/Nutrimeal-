@@ -14,7 +14,7 @@ permissions:
 jobs:
   android-e2e:
     name: Build APK + Run Appium Tests (API 29 · Nexus 6)
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     timeout-minutes: 90
 
     steps:
@@ -38,7 +38,7 @@ jobs:
 
       # ── 4. Build Debug APK via Flutter ───────────────────────────────────────
       - name: Build Debug APK
-        run: flutter build apk --debug --target-platform android-x64
+        run: flutter build apk --debug --target-platform android-arm64
         working-directory: ${{ github.workspace }}
 
       # Also expose the APK path as a step output for clarity
@@ -63,21 +63,9 @@ jobs:
           npm install -g appium@latest
           appium driver install uiautomator2
 
-      # ── 7. Enable KVM hardware acceleration ───────────────────────────────────
-      - name: Enable KVM hardware acceleration
-        run: |
-          echo "Checking KVM availability..."
-          sudo apt-get install -y cpu-checker
-          kvm-ok || true
-          echo "Enabling KVM kernel module..."
-          sudo modprobe kvm || true
-          sudo modprobe kvm_intel || sudo modprobe kvm_amd || true
-          # Ignore KVM MSRs to avoid emulator crashes on nested virtualisation
-          echo 1 | sudo tee /sys/module/kvm/parameters/ignore_msrs || true
-          # Grant runner permission to /dev/kvm
-          sudo chmod 777 /dev/kvm || true
-          echo "KVM setup complete."
-          ls -la /dev/kvm || true
+      # ── 7. Enable KVM hardware acceleration (macOS natively uses Hypervisor framework) ──
+      - name: Skip KVM (macOS natively accelerated)
+        run: echo "macOS runner provides native hardware acceleration for Android Emulators."
 
       # ── 8. Make CI script executable ─────────────────────────────────────────
       - name: Make CI script executable
@@ -90,7 +78,7 @@ jobs:
           APK_PATH: ${{ env.APK_PATH }}
         with:
           api-level: 29
-          arch: x86_64
+          arch: arm64-v8a
           target: google_apis
           profile: Nexus 6
           avd-name: Nutrimeal_E2E_AVD
