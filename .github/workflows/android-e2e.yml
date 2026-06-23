@@ -83,7 +83,7 @@ jobs:
           profile: Nexus 6
           avd-name: Nutrimeal_E2E_AVD
           disable-animations: true
-          emulator-options: -no-snapshot -no-window -no-boot-anim -gpu swiftshader_indirect
+          emulator-options: -no-snapshot -no-window -no-boot-anim
           script: bash ./NutrimealAppium/scripts/ci_run_tests.sh
 
       # ── 10. Upload Test_Results as artifact ───────────────────────────────────
