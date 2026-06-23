@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   android-e2e:
-    name: Build APK + Run Appium Tests (API 29 · Nexus 6)
+    name: Build APK + Run Appium Tests (API 33 · Nexus 6)
     runs-on: macos-latest
     timeout-minutes: 90
 
@@ -72,12 +72,12 @@ jobs:
         run: chmod +x ${{ github.workspace }}/NutrimealAppium/scripts/ci_run_tests.sh
 
       # ── 9. Boot emulator + run Appium tests ───────────────────────────────────
-      - name: Run Appium Tests on Android Emulator (API 29 · Nexus 6)
+      - name: Run Appium Tests on Android Emulator (API 33 · Nexus 6)
         uses: reactivecircus/android-emulator-runner@v2
         env:
           APK_PATH: ${{ env.APK_PATH }}
         with:
-          api-level: 29
+          api-level: 33
           arch: arm64-v8a
           target: google_apis
           profile: Nexus 6
