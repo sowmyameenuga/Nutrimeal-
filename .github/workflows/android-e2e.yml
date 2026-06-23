@@ -96,9 +96,7 @@ jobs:
           avd-name: Nutrimeal_E2E_AVD
           disable-animations: true
           emulator-options: -no-snapshot -no-window -no-boot-anim -gpu swiftshader_indirect
-          script: |
-            cd ${{ github.workspace }}/NutrimealAppium
-            bash scripts/ci_run_tests.sh
+          script: bash ./NutrimealAppium/scripts/ci_run_tests.sh
 
       # ── 10. Upload Test_Results as artifact ───────────────────────────────────
       - name: Upload Test Results Artifact
