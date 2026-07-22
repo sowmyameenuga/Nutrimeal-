@@ -288,7 +288,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                 onPressed: () async {
                   try {
                     final int kcal = int.parse(widget.calories.replaceAll(RegExp(r'[^0-9]'), ''));
-                    await ProgressService.logMeal(kcal);
+                    final double pGrams = double.tryParse(widget.protein.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+                    await ProgressService.logMeal(kcal, protein: pGrams);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Meal logged successfully!"), backgroundColor: Colors.green),

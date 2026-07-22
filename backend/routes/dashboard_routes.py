@@ -31,17 +31,19 @@ def get_dashboard():
     planned_calories = sum(m.calories for m in meals)
     planned_protein = sum(m.protein for m in meals)
 
-    # Actual consumed values from ProgressLog (updated when user logs meals/water)
+    # Actual consumed values from ProgressLog (updated when user clicks 'I Ate This!' or logs water)
     consumed_calories = progress.calories_consumed if progress else 0
+    consumed_protein = progress.protein_consumed if progress else 0.0
     consumed_water = progress.water_litres if progress else 0.0
     water_glasses = int(consumed_water / 0.25) if consumed_water else 0  # 1 glass = 250ml
 
     return jsonify({
         "user_name": user.name if user else "User",
         "daily_summary": {
-            "calories": planned_calories,
+            "calories": consumed_calories,
             "planned_calories": planned_calories,
-            "protein": round(planned_protein, 1),
+            "protein": round(consumed_protein, 1),
+            "planned_protein": round(planned_protein, 1),
             "water": round(consumed_water, 1),
             "water_glasses": water_glasses,
         },

@@ -170,7 +170,7 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -183,13 +183,26 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
+                ElevatedButton.icon(
+                  onPressed: () => _logAteMeal(meal),
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text("I Ate This!", style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
                   onPressed: () => _confirmDelete(meal),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Row(
               children: [
                 _buildMacroPill("Cal", "${meal['calories'] ?? 0} kcal", Colors.orange),
@@ -201,7 +214,6 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
                 _buildMacroPill("F", "${meal['fat']?.toStringAsFixed(0) ?? 0}g", Colors.red),
               ],
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),

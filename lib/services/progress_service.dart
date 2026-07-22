@@ -21,11 +21,11 @@ class ProgressService {
     return await ApiService.post('/progress/log', body: body);
   }
 
-  /// Add a meal's calories to today's progress.
-  static Future<Map<String, dynamic>> logMeal(int calories) async {
+  /// Add a meal's calories and protein to today's progress.
+  static Future<Map<String, dynamic>> logMeal(int calories, {double protein = 0}) async {
     return await ApiService.post(
       '/progress/log_meal',
-      body: {'calories': calories},
+      body: {'calories': calories, 'protein': protein},
     );
   }
 
