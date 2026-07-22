@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/dashboard_service.dart';
 import '../services/meal_service.dart';
+import '../services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -72,6 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       totalCalories = summary['calories'] ?? 0;
       totalProtein = (summary['protein'] ?? 0).toDouble();
       totalWater = (summary['water'] ?? 0).toDouble();
+      _waterGlasses = summary['water_glasses'] ?? 0;
 
       final breakfasts = meals['breakfast'] as List? ?? [];
       final lunches = meals['lunch'] as List? ?? [];
@@ -91,6 +93,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? snacks[0]['title'] ?? "Snack"
           : "No snack planned";
     });
+  }
+
+  Future<void> _logWater(int glasses) async {
+    final litres = glasses * 0.25; // 1 glass = 250ml
+    await ApiService.post(
+      '/progress/log',
+      body: {'water_litres': litres},
+    );
   }
 
   @override
@@ -285,9 +295,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               final filled = index < _waterGlasses;
                               return GestureDetector(
                                 onTap: () {
+                                  final newGlasses = index + 1;
                                   setState(() {
-                                    _waterGlasses = index + 1;
+                                    _waterGlasses = newGlasses;
+                                    totalWater = newGlasses * 0.25;
                                   });
+                                  _logWater(newGlasses);
                                 },
                                 child: Icon(
                                   filled ? Icons.local_drink : Icons.local_drink_outlined,
@@ -342,7 +355,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           context,
                           '/recommendation',
                           arguments: {'meal_type': 'Breakfast'},
-                        );
+                        ).then((_) => _loadDashboard());
                       },
                     ),
 
@@ -357,7 +370,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           context,
                           '/recommendation',
                           arguments: {'meal_type': 'Lunch'},
-                        );
+                        ).then((_) => _loadDashboard());
                       },
                     ),
 
@@ -372,7 +385,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           context,
                           '/recommendation',
                           arguments: {'meal_type': 'Dinner'},
-                        );
+                        ).then((_) => _loadDashboard());
                       },
                     ),
 
@@ -387,7 +400,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           context,
                           '/recommendation',
                           arguments: {'meal_type': 'Snack'},
-                        );
+                        ).then((_) => _loadDashboard());
                       },
                     ),
 

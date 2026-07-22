@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
@@ -61,8 +62,10 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl$endpoint'),
         headers: await _headers(auth: auth),
-      );
+      ).timeout(const Duration(seconds: 60));
       return _handleResponse(response);
+    } on TimeoutException {
+      return {'error': 'Server is waking up (takes ~50s). Please try again!', 'statusCode': 408};
     } catch (e) {
       return {'error': 'Connection failed: $e', 'statusCode': 0};
     }
@@ -79,8 +82,10 @@ class ApiService {
         Uri.parse('$baseUrl$endpoint'),
         headers: await _headers(auth: auth),
         body: body != null ? jsonEncode(body) : null,
-      );
+      ).timeout(const Duration(seconds: 60));
       return _handleResponse(response);
+    } on TimeoutException {
+      return {'error': 'Server is waking up (takes ~50s). Please try again!', 'statusCode': 408};
     } catch (e) {
       return {'error': 'Connection failed: $e', 'statusCode': 0};
     }
