@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/meal_service.dart';
 import '../services/progress_service.dart';
+import 'food_details_screen.dart';
 
 
 class SavedMealsScreen extends StatefulWidget {
@@ -185,61 +186,90 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
   }
 
   Widget _buildSavedMealCard(dynamic meal, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    meal['title'] ?? "Unknown Meal",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _logAteMeal(meal),
-                  icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text("I Ate This!", style: TextStyle(fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
-                  onPressed: () => _confirmDelete(meal),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FoodDetailsScreen(
+              mealId: meal['id'] ?? 0,
+              title: meal['title'] ?? 'Unknown Meal',
+              calories: '${meal['calories'] ?? 0}',
+              protein: '${meal['protein'] ?? 0}',
+              carbs: '${meal['carbs'] ?? 0}',
+              fat: '${meal['fat'] ?? 0}',
+              ingredients: meal['ingredients'],
+              healthBenefits: meal['health_benefits'],
+              recipeSteps: meal['recipe_steps'],
+              mealType: meal['meal_type'],
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _buildMacroPill("Cal", "${meal['calories'] ?? 0} kcal", Colors.orange),
-                const SizedBox(width: 8),
-                _buildMacroPill("P", "${meal['protein']?.toStringAsFixed(0) ?? 0}g", Colors.blue),
-                const SizedBox(width: 8),
-                _buildMacroPill("C", "${meal['carbs']?.toStringAsFixed(0) ?? 0}g", Colors.amber),
-                const SizedBox(width: 8),
-                _buildMacroPill("F", "${meal['fat']?.toStringAsFixed(0) ?? 0}g", Colors.red),
-              ],
-            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4)),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      meal['title'] ?? "Unknown Meal",
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () => _logAteMeal(meal),
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text("I Ate This!", style: TextStyle(fontSize: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                    onPressed: () => _confirmDelete(meal),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildMacroPill("Cal", "${meal['calories'] ?? 0} kcal", Colors.orange),
+                  const SizedBox(width: 8),
+                  _buildMacroPill("P", "${meal['protein']?.toStringAsFixed(0) ?? 0}g", Colors.blue),
+                  const SizedBox(width: 8),
+                  _buildMacroPill("C", "${meal['carbs']?.toStringAsFixed(0) ?? 0}g", Colors.amber),
+                  const SizedBox(width: 8),
+                  _buildMacroPill("F", "${meal['fat']?.toStringAsFixed(0) ?? 0}g", Colors.red),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(Icons.touch_app, size: 14, color: Colors.grey.shade400),
+                  const SizedBox(width: 4),
+                  Text("Tap to view recipe", style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
