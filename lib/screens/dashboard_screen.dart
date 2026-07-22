@@ -455,19 +455,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: (index) {
 
           if (index == 1) {
-            Navigator.pushNamed(context, '/recommendation');
+            Navigator.pushNamed(context, '/recommendation').then((_) => _loadDashboard());
           }
 
           if (index == 2) {
-            Navigator.pushNamed(context, '/progress');
+            Navigator.pushNamed(context, '/progress').then((_) => _loadDashboard());
           }
 
           if (index == 3) {
-            Navigator.pushNamed(context, '/insights');
+            Navigator.pushNamed(context, '/insights').then((_) => _loadDashboard());
           }
 
           if (index == 4) {
-            Navigator.pushNamed(context, '/profile');
+            Navigator.pushNamed(context, '/profile').then((_) => _loadDashboard());
           }
         },
 
@@ -511,7 +511,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ) {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, route);
+        Navigator.pushNamed(context, route).then((_) => _loadDashboard());
       },
 
       child: Container(
