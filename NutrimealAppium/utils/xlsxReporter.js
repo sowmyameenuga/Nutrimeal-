@@ -351,7 +351,7 @@ async function generateReport(outputPath) {
   casesSheet.getRow(1).height = 22;
 
   // ── Write Excel file ──────────────────────────────────────────────────────
-  const excelPath = path.join(outDir, 'android-selenium-report.xlsx');
+  const excelPath = path.join(outDir, 'nutrimeal-appium-e2e-report.xlsx');
   await workbook.xlsx.writeFile(excelPath);
   console.log(`[xlsxReporter] Excel report → ${excelPath}`);
 
