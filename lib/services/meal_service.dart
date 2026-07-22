@@ -57,4 +57,10 @@ class MealService {
       body: mealData,
     );
   }
+
+  /// Delete a meal from today's meal plan.
+  static Future<Map<String, dynamic>> deleteMeal(int mealId) async {
+    return await ApiService.delete('/meals/$mealId');
+  }
 }
+

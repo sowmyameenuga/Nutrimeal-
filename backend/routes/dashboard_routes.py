@@ -39,7 +39,7 @@ def get_dashboard():
     return jsonify({
         "user_name": user.name if user else "User",
         "daily_summary": {
-            "calories": consumed_calories,
+            "calories": planned_calories,
             "planned_calories": planned_calories,
             "protein": round(planned_protein, 1),
             "water": round(consumed_water, 1),

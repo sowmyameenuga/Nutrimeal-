@@ -117,6 +117,48 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
     );
   }
 
+  Future<void> _confirmDelete(dynamic meal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Saved Meal"),
+        content: Text("Are you sure you want to remove '${meal['title']}' from today's plan?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      setState(() => _isLoading = true);
+      final response = await MealService.deleteMeal(meal['id']);
+      if (mounted) {
+        if (response['statusCode'] == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Meal deleted successfully"), backgroundColor: Colors.green),
+          );
+          _loadSavedMeals();
+        } else {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response['error'] ?? "Failed to delete meal")),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildSavedMealCard(dynamic meal, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -128,15 +170,26 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              meal['title'] ?? "Unknown Meal",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    meal['title'] ?? "Unknown Meal",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                  onPressed: () => _confirmDelete(meal),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Row(
               children: [
                 _buildMacroPill("Cal", "${meal['calories'] ?? 0} kcal", Colors.orange),
@@ -148,11 +201,13 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
                 _buildMacroPill("F", "${meal['fat']?.toStringAsFixed(0) ?? 0}g", Colors.red),
               ],
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
     );
   }
+
 
   Widget _buildMacroPill(String label, String value, Color color) {
     return Container(
