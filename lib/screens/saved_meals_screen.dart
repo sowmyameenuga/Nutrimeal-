@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/meal_service.dart';
+import '../services/progress_service.dart';
+
 
 class SavedMealsScreen extends StatefulWidget {
   const SavedMealsScreen({super.key});
@@ -115,6 +117,29 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
           ...meals.map((meal) => _buildSavedMealCard(meal, color)),
       ],
     );
+  }
+
+  Future<void> _logAteMeal(dynamic meal) async {
+    final int kcal = (meal['calories'] ?? 0) is int 
+        ? meal['calories'] 
+        : int.tryParse(meal['calories'].toString()) ?? 0;
+    final double protein = (meal['protein'] ?? 0).toDouble();
+
+    final response = await ProgressService.logMeal(kcal, protein: protein);
+    if (mounted) {
+      if (response['statusCode'] == 200 || response.containsKey('message')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Logged ${meal['title']}! (+${kcal} kcal, +${protein.toStringAsFixed(0)}g protein)"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['error'] ?? "Failed to log meal")),
+        );
+      }
+    }
   }
 
   Future<void> _confirmDelete(dynamic meal) async {
