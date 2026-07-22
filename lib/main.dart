@@ -13,6 +13,7 @@ import 'screens/insights_screen.dart';
 import 'screens/saved_meals_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/privacy_screen.dart';
+import 'screens/meal_history_screen.dart';
 
 
 void main() {
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         '/recommendation': (context) => const RecommendationScreen(),
         '/insights': (context) => const InsightsScreen(),
         '/saved_meals': (context) => const SavedMealsScreen(),
+        '/meal_history': (context) => const MealHistoryScreen(),
         '/notifications': (context) => const NotificationsScreen(),
         '/privacy': (context) => const PrivacyScreen(),
       },

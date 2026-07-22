@@ -108,6 +108,26 @@ class ApiService {
     }
   }
 
+  /// PUT request.
+  static Future<Map<String, dynamic>> put(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    bool auth = true,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: await _headers(auth: auth),
+        body: body != null ? jsonEncode(body) : null,
+      ).timeout(const Duration(seconds: 60));
+      return _handleResponse(response);
+    } on TimeoutException {
+      return {'error': 'Server is waking up (takes ~50s). Please try again!', 'statusCode': 408};
+    } catch (e) {
+      return {'error': 'Connection failed: $e', 'statusCode': 0};
+    }
+  }
+
   /// Parse response JSON and attach status code.
   static Map<String, dynamic> _handleResponse(http.Response response) {
     try {

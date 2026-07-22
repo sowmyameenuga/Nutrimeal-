@@ -289,11 +289,57 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                   try {
                     final int kcal = int.parse(widget.calories.replaceAll(RegExp(r'[^0-9]'), ''));
                     final double pGrams = double.tryParse(widget.protein.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
-                    await ProgressService.logMeal(kcal, protein: pGrams);
+                    
+                    final response = await ProgressService.logMeal(
+                      kcal,
+                      protein: pGrams,
+                      title: widget.title,
+                      mealId: widget.mealId,
+                    );
+
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Meal logged successfully!"), backgroundColor: Colors.green),
-                      );
+                      if (response['statusCode'] == 409) {
+                        final bool? confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Duplicate Meal"),
+                            content: Text(response['message'] ?? "You already logged this meal today. Log it again?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text("Cancel"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text("Log Again"),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          final retryResponse = await ProgressService.logMeal(
+                            kcal,
+                            protein: pGrams,
+                            title: widget.title,
+                            mealId: widget.mealId,
+                            confirmDuplicate: true,
+                          );
+                          if (context.mounted && (retryResponse['statusCode'] == 200 || retryResponse.containsKey('message'))) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Meal logged successfully!"), backgroundColor: Colors.green),
+                            );
+                          }
+                        }
+                      } else if (response['statusCode'] == 200 || response.containsKey('message')) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Meal logged successfully!"), backgroundColor: Colors.green),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(response['error'] ?? "Failed to log meal")),
+                        );
+                      }
                     }
                   } catch (e) {
                     if (context.mounted) {

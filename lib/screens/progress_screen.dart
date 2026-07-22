@@ -171,6 +171,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/meal_history').then((_) => _loadProgress());
+                },
+                icon: const Icon(Icons.history),
+                label: const Text("View Meal History"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
 
             const SizedBox(height: 30),
 

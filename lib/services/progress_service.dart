@@ -21,16 +21,55 @@ class ProgressService {
     return await ApiService.post('/progress/log', body: body);
   }
 
-  /// Add a meal's calories and protein to today's progress.
-  static Future<Map<String, dynamic>> logMeal(int calories, {double protein = 0}) async {
+  /// Add a meal to today's progress. Checks for duplicates.
+  static Future<Map<String, dynamic>> logMeal(int calories, {
+    double protein = 0,
+    String title = "Unknown Meal",
+    int? mealId,
+    bool confirmDuplicate = false,
+  }) async {
     return await ApiService.post(
       '/progress/log_meal',
-      body: {'calories': calories, 'protein': protein},
+      body: {
+        'calories': calories,
+        'protein': protein,
+        'title': title,
+        'meal_id': mealId,
+        'confirm_duplicate': confirmDuplicate,
+      },
     );
   }
 
   /// Get last 7 days of activity.
   static Future<Map<String, dynamic>> getWeeklyActivity() async {
     return await ApiService.get('/progress/weekly');
+  }
+
+  /// Get all logged meals grouped by date.
+  static Future<List<dynamic>> getMealHistory() async {
+    final response = await ApiService.get('/progress/history');
+    if (response.containsKey('data') && response['data'] is List) {
+      return response['data'];
+    }
+    return [];
+  }
+
+  /// Delete a logged meal from history.
+  static Future<Map<String, dynamic>> deleteLoggedMeal(int logId) async {
+    return await ApiService.delete('/progress/logged_meal/$logId');
+  }
+
+  /// Update a logged meal's details.
+  static Future<Map<String, dynamic>> updateLoggedMeal(int logId, {
+    int? calories,
+    double? protein,
+    String? title,
+  }) async {
+    final body = <String, dynamic>{};
+    if (calories != null) body['calories'] = calories;
+    if (protein != null) body['protein'] = protein;
+    if (title != null) body['title'] = title;
+
+    return await ApiService.put('/progress/logged_meal/$logId', body: body);
   }
 }

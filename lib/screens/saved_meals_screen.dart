@@ -126,9 +126,49 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
         : int.tryParse(meal['calories'].toString()) ?? 0;
     final double protein = (meal['protein'] ?? 0).toDouble();
 
-    final response = await ProgressService.logMeal(kcal, protein: protein);
+    final response = await ProgressService.logMeal(
+      kcal,
+      protein: protein,
+      title: meal['title'] ?? 'Unknown Meal',
+      mealId: meal['id'],
+    );
+    
     if (mounted) {
-      if (response['statusCode'] == 200 || response.containsKey('message')) {
+      if (response['statusCode'] == 409) {
+        // Show confirmation dialog
+        final bool? confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Duplicate Meal"),
+            content: Text(response['message'] ?? "You already logged this meal today. Log it again?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Log Again"),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          final retryResponse = await ProgressService.logMeal(
+            kcal,
+            protein: protein,
+            title: meal['title'] ?? 'Unknown Meal',
+            mealId: meal['id'],
+            confirmDuplicate: true,
+          );
+          if (mounted && (retryResponse['statusCode'] == 200 || retryResponse.containsKey('message'))) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Logged ${meal['title']}!"), backgroundColor: Colors.green),
+            );
+          }
+        }
+      } else if (response['statusCode'] == 200 || response.containsKey('message')) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Logged ${meal['title']}! (+${kcal} kcal, +${protein.toStringAsFixed(0)}g protein)"),
