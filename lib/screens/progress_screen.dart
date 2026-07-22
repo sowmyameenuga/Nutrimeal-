@@ -158,7 +158,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     height: 50,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/saved_meals').then((_) => _loadProgressData());
+                        Navigator.pushNamed(context, '/saved_meals').then((_) => _loadProgress());
                       },
                       icon: const Icon(Icons.bookmark),
                       label: const Text("Saved Meals"),
