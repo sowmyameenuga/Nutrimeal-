@@ -42,10 +42,6 @@ class SettingsScreen extends StatelessWidget {
             Navigator.pushNamed(context, '/profile');
           }),
 
-          settingsTile(Icons.notifications, "Notifications", () {
-            Navigator.pushNamed(context, '/notifications');
-          }),
-
           settingsTile(Icons.lock, "Privacy & Security", () {
             Navigator.pushNamed(context, '/privacy');
           }),
@@ -56,6 +52,38 @@ class SettingsScreen extends StatelessWidget {
               builder: (_) => const AlertDialog(
                 title: Text("Help"),
                 content: Text("Contact support: support@aiapp.com"),
+              ),
+            );
+          }),
+
+          settingsTile(Icons.info_outline, "About the App", () {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.restaurant_menu, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text("NutriMeal"),
+                  ],
+                ),
+                content: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Version 1.0.0\n"),
+                    Text("NutriMeal is your smart food & health companion. "
+                        "Track your daily nutrition, get personalized meal recommendations, "
+                        "monitor your progress, and achieve your health goals.\n"),
+                    Text("Built with ❤️ using Flutter & AI."),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(_),
+                    child: const Text("Close"),
+                  ),
+                ],
               ),
             );
           }),
