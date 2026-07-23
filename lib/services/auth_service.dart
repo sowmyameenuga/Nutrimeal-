@@ -58,4 +58,30 @@ class AuthService {
   static Future<bool> isLoggedIn() async {
     return await ApiService.isLoggedIn();
   }
+
+  /// Request a password reset token for the given email.
+  static Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    return await ApiService.post(
+      '/auth/forgot-password',
+      body: {'email': email},
+      auth: false,
+    );
+  }
+
+  /// Reset password using a reset token.
+  static Future<Map<String, dynamic>> resetPassword({
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    return await ApiService.post(
+      '/auth/reset-password',
+      body: {
+        'reset_token': resetToken,
+        'new_password': newPassword,
+      },
+      auth: false,
+    );
+  }
 }

@@ -69,3 +69,67 @@ def login():
 def logout():
     """Logout (client should discard token)."""
     return jsonify({"message": "Logged out successfully"}), 200
+
+
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    """Send a password-reset token for the given email.
+    Since we don't have email infra, we return the token directly
+    so the client can immediately show the reset form.
+    """
+    data = request.get_json() or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if user is None:
+        return jsonify({"error": "No account found with this email"}), 404
+
+    # Generate a short-lived token for password reset
+    reset_token = create_access_token(
+        identity=str(user.id),
+        additional_claims={"purpose": "password_reset"},
+    )
+
+    return jsonify({
+        "message": "Reset token generated",
+        "reset_token": reset_token,
+    }), 200
+
+
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    """Reset password using a valid reset token."""
+    data = request.get_json() or {}
+
+    reset_token = data.get("reset_token", "")
+    new_password = data.get("new_password", "")
+
+    if not reset_token or not new_password:
+        return jsonify({"error": "Token and new password are required"}), 400
+
+    if len(new_password) < 4:
+        return jsonify({"error": "Password must be at least 4 characters"}), 400
+
+    # Decode the token to get user id
+    from flask_jwt_extended import decode_token
+    try:
+        decoded = decode_token(reset_token)
+        user_id = decoded["sub"]
+        purpose = decoded.get("purpose", "")
+        if purpose != "password_reset":
+            return jsonify({"error": "Invalid reset token"}), 400
+    except Exception:
+        return jsonify({"error": "Invalid or expired reset token"}), 400
+
+    user = User.query.get(int(user_id))
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    user.set_password(new_password)
+    db.session.commit()
+
+    return jsonify({"message": "Password reset successfully"}), 200

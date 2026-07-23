@@ -13,6 +13,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> signupUser() async {
     if (name.text.isEmpty || email.text.isEmpty || password.text.isEmpty) {
@@ -87,6 +88,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: name,
                 decoration: InputDecoration(
                   labelText: "Name",
+                  prefixIcon: const Icon(Icons.person),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -97,6 +99,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: email,
                 decoration: InputDecoration(
                   labelText: "Email",
+                  prefixIcon: const Icon(Icons.email),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -105,9 +108,20 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 15),
               TextField(
                 controller: password,
-                obscureText: true,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: "Password",
+                  prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() => _obscurePassword = !_obscurePassword);
+                    },
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -206,7 +220,7 @@ class _SignupScreenState extends State<SignupScreen> {
             );
           }
 
-          // Mobile layout — unchanged
+          // Mobile layout — unchanged original
           return Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -224,8 +238,20 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 15),
                 TextField(
                   controller: password,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: "Password"),
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: "Password",
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 30),
                 ElevatedButton(

@@ -39,6 +39,23 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   String recipeSteps = "";
   bool _isLoading = true;
 
+  /// Fix common broken UTF-8 encoded characters (e.g. â€¢ → •)
+  String _fixEncoding(String text) {
+    return text
+        .replaceAll('\u00e2\u0080\u00a2', '\u2022')   // â€¢ → •
+        .replaceAll('\u00e2\u0080\u0093', '\u2013')   // â€" → –
+        .replaceAll('\u00e2\u0080\u0094', '\u2014')   // â€" → —
+        .replaceAll('\u00e2\u0080\u0099', '\u2019')   // â€™ → '
+        .replaceAll('\u00e2\u0080\u009c', '\u201c')   // â€œ → "
+        .replaceAll('\u00e2\u0080\u009d', '\u201d')   // â€ → "
+        .replaceAll('â€¢', '•')
+        .replaceAll('â€"', '–')
+        .replaceAll('â€"', '—')
+        .replaceAll('â€™', "'")
+        .replaceAll('â€œ', '"')
+        .replaceAll('â€\u009d', '"');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -189,7 +206,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             _isLoading
                 ? const CircularProgressIndicator()
                 : Text(
-                    ingredients,
+                    _fixEncoding(ingredients),
                     style: const TextStyle(fontSize: 16),
                   ),
 
@@ -208,7 +225,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             _isLoading
                 ? const CircularProgressIndicator()
                 : Text(
-                    healthBenefits,
+                    _fixEncoding(healthBenefits),
                     style: const TextStyle(fontSize: 16),
                   ),
 
