@@ -133,3 +133,56 @@ def reset_password():
     db.session.commit()
 
     return jsonify({"message": "Password reset successfully"}), 200
+
+
+@auth_bp.route("/change-password", methods=["PUT"])
+def change_password():
+    """Change password for an authenticated user."""
+    from flask_jwt_extended import jwt_required, get_jwt_identity
+    from flask_jwt_extended.view_decorators import verify_jwt_in_request
+    
+    # We use verify_jwt_in_request() here since this route is not decorated directly
+    # because of blueprint scoping issues if jwt_required is imported top-level.
+    verify_jwt_in_request()
+    user_id = int(get_jwt_identity())
+    
+    data = request.get_json() or {}
+    old_password = data.get("old_password", "")
+    new_password = data.get("new_password", "")
+
+    if not old_password or not new_password:
+        return jsonify({"error": "Both old and new passwords are required"}), 400
+
+    if len(new_password) < 4:
+        return jsonify({"error": "New password must be at least 4 characters"}), 400
+
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    if not user.check_password(old_password):
+        return jsonify({"error": "Incorrect current password"}), 401
+
+    user.set_password(new_password)
+    db.session.commit()
+
+    return jsonify({"message": "Password changed successfully"}), 200
+
+
+@auth_bp.route("/account", methods=["DELETE"])
+def delete_account():
+    """Permanently delete the authenticated user's account and all data."""
+    from flask_jwt_extended import jwt_required, get_jwt_identity
+    from flask_jwt_extended.view_decorators import verify_jwt_in_request
+    
+    verify_jwt_in_request()
+    user_id = int(get_jwt_identity())
+    
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+        
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({"message": "Account deleted successfully"}), 200

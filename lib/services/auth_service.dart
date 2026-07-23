@@ -84,4 +84,27 @@ class AuthService {
       auth: false,
     );
   }
+
+  /// Change password for the currently authenticated user.
+  static Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    return await ApiService.put(
+      '/auth/change-password',
+      body: {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      },
+    );
+  }
+
+  /// Permanently delete the authenticated user's account.
+  static Future<Map<String, dynamic>> deleteAccount() async {
+    final response = await ApiService.delete('/auth/account');
+    if (response['statusCode'] == 200) {
+      await ApiService.clearToken();
+    }
+    return response;
+  }
 }
