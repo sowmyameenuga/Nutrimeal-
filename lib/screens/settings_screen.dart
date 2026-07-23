@@ -59,7 +59,7 @@ class SettingsScreen extends StatelessWidget {
           settingsTile(Icons.info_outline, "About the App", () {
             showDialog(
               context: context,
-              builder: (_) => AlertDialog(
+              builder: (dialogCtx) => AlertDialog(
                 title: const Row(
                   children: [
                     Icon(Icons.restaurant_menu, color: Colors.green),
@@ -80,7 +80,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.pop(_),
+                    onPressed: () => Navigator.pop(dialogCtx),
                     child: const Text("Close"),
                   ),
                 ],
