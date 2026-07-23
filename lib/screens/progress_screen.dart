@@ -209,6 +209,27 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
               child: _buildBarChart(),
             ),
+
+            const SizedBox(height: 30),
+
+            // DAILY BREAKDOWN LIST
+            const Text(
+              "Daily Breakdown",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            if (weeklyActivity.isEmpty)
+              const Text("No weekly activity logged yet.")
+            else
+              ...weeklyActivity.reversed.map(
+                (a) => weeklyTile(a.dayName, "${a.caloriesConsumed} kcal"),
+              ),
+            
+            const SizedBox(height: 20),
           ],
         ),
       ),
