@@ -116,93 +116,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
           constraints: const BoxConstraints(maxWidth: 600),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                const CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.green,
-                  child: Icon(Icons.person, size: 60, color: Colors.white),
-                ),
+        child: Column(
+          children: [
+            const CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.green,
+              child: Icon(Icons.person, size: 60, color: Colors.white),
+            ),
 
-                const SizedBox(height: 25),
+            const SizedBox(height: 25),
 
-                textField(controller: nameController, hint: "Full Name", icon: Icons.person),
-                const SizedBox(height: 20),
+            textField(controller: nameController, hint: "Full Name", icon: Icons.person),
+            const SizedBox(height: 20),
 
-                textField(controller: ageController, hint: "Age", icon: Icons.calendar_today),
-                const SizedBox(height: 20),
+            textField(controller: ageController, hint: "Age", icon: Icons.calendar_today),
+            const SizedBox(height: 20),
 
-                dropdownBox(
-                  value: selectedGender,
-                  icon: Icons.people,
-                  items: ["Male", "Female", "Other"],
-                  onChanged: (value) => setState(() => selectedGender = value!),
-                ),
+            dropdownBox(
+              value: selectedGender,
+              icon: Icons.people,
+              items: ["Male", "Female", "Other"],
+              onChanged: (value) => setState(() => selectedGender = value!),
+            ),
 
-                const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-                textField(controller: heightController, hint: "Height (cm)", icon: Icons.height),
-                const SizedBox(height: 20),
+            textField(controller: heightController, hint: "Height (cm)", icon: Icons.height),
+            const SizedBox(height: 20),
 
-                textField(controller: weightController, hint: "Weight (kg)", icon: Icons.monitor_weight),
-                const SizedBox(height: 20),
+            textField(controller: weightController, hint: "Weight (kg)", icon: Icons.monitor_weight),
+            const SizedBox(height: 20),
 
-                const Text("Fitness Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 8),
-                dropdownBox(
-                  value: selectedGoal,
-                  icon: Icons.flag,
-                  items: [
-                    "Weight Loss",
-                    "Weight Gain",
-                    "Fat Loss",
-                    "Muscle Gain",
-                    "Maintain Weight",
-                  ],
-                  onChanged: (value) => setState(() => selectedGoal = value!),
-                ),
-
-                const SizedBox(height: 20),
-
-                const Text("Allergies", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 8),
-                dropdownBox(
-                  value: selectedAllergy,
-                  icon: Icons.no_food,
-                  items: ["None", "Nuts", "Dairy", "Gluten", "Seafood", "Eggs"],
-                  onChanged: (value) => setState(() => selectedAllergy = value!),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ⭐ NEW DIET DROPDOWN
-                const Text("Diet Preference (Veg / Non-Veg / Vegan)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 8),
-                dropdownBox(
-                  value: selectedDiet,
-                  icon: Icons.restaurant,
-                  items: ["Veg", "Non-Veg", "Vegan"],
-                  onChanged: (value) => setState(() => selectedDiet = value!),
-                ),
-
-
-                const SizedBox(height: 35),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : saveProfile,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                    child: _isSaving
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                      "Save Profile",
-                      style: TextStyle(fontSize: 20, color: Colors.white),
-                    ),
-                  ),
-                ),
+            const Text("Fitness Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            dropdownBox(
+              value: selectedGoal,
+              icon: Icons.flag,
+              items: [
+                "Weight Loss",
+                "Weight Gain",
+                "Fat Loss",
+                "Muscle Gain",
+                "Maintain Weight",
               ],
+              onChanged: (value) => setState(() => selectedGoal = value!),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text("Allergies", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            dropdownBox(
+              value: selectedAllergy,
+              icon: Icons.no_food,
+              items: ["None", "Nuts", "Dairy", "Gluten", "Seafood", "Eggs"],
+              onChanged: (value) => setState(() => selectedAllergy = value!),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ⭐ NEW DIET DROPDOWN
+            const Text("Diet Preference (Veg / Non-Veg / Vegan)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            dropdownBox(
+              value: selectedDiet,
+              icon: Icons.restaurant,
+              items: ["Veg", "Non-Veg", "Vegan"],
+              onChanged: (value) => setState(() => selectedDiet = value!),
+            ),
+
+
+            const SizedBox(height: 35),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : saveProfile,
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: _isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                  "Save Profile",
+                  style: TextStyle(fontSize: 20, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
             ),
           ),
         ),

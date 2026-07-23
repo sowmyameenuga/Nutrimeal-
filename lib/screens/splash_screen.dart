@@ -35,60 +35,68 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.green.shade50,
-
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 800;
 
-          final logoAndText = Column(
+          final ctaContent = Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.restaurant_menu,
-                size: 120,
-                color: Colors.green,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                "AI Nutrition App",
+              if (!isWide) ...[
+                const Icon(
+                  Icons.restaurant_menu,
+                  size: 120,
+                  color: Colors.green,
+                ),
+                const SizedBox(height: 20),
+              ],
+              Text(
+                isWide ? "Welcome to NutriMeal" : "AI Nutrition App",
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: isWide ? 36 : 28,
                   fontWeight: FontWeight.bold,
+                  color: isWide ? Colors.black87 : Colors.black,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "Your smart food & health companion",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          );
-
-          final actionButton = SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-              ),
-              child: const Text(
-                "Let's Get Started",
                 style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
+                  fontSize: 16,
+                  color: Colors.grey.shade600,
                 ),
               ),
-            ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: isWide ? 300 : double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/login');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    "Let's Get Started",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
 
           if (isWide) {
             return Row(
               children: [
-                // Left Panel: Brand & Gradient
+                // Left Panel: Green Gradient Branding
                 Expanded(
                   flex: 6,
                   child: Container(
@@ -111,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           ),
                           SizedBox(height: 12),
                           Text(
-                            "Your Personalized AI Health & Food Companion",
+                            "AI-powered nutrition tracking",
                             style: TextStyle(fontSize: 18, color: Colors.white70),
                           ),
                         ],
@@ -119,7 +127,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ),
                 ),
-                // Right Panel: Form Actions
+                // Right Panel: CTA
                 Expanded(
                   flex: 5,
                   child: Container(
@@ -128,23 +136,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     child: Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Welcome to NutriMeal",
-                              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black87),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              "Start logging your daily nutrition goals and customize your meals with our AI assistant.",
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 48),
-                            actionButton,
-                          ],
-                        ),
+                        child: ctaContent,
                       ),
                     ),
                   ),
@@ -153,18 +145,11 @@ class _SplashScreenState extends State<SplashScreen> {
             );
           }
 
-          // Default Mobile View
+          // Mobile layout — unchanged
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  logoAndText,
-                  const SizedBox(height: 40),
-                  actionButton,
-                ],
-              ),
+              child: ctaContent,
             ),
           );
         },

@@ -112,13 +112,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: MediaQuery.of(context).size.width > 800 
+        leading: MediaQuery.of(context).size.width > 800
             ? const Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Icon(Icons.restaurant_menu, color: Colors.green, size: 28),
               )
             : const Icon(Icons.menu, color: Colors.black),
-        title: MediaQuery.of(context).size.width > 800 
+        title: MediaQuery.of(context).size.width > 800
             ? const Text("NutriMeal", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
             : null,
         actions: [
@@ -176,344 +176,310 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadDashboard,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 800;
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
 
-                  // Define the content widgets so they can be reused/arranged differently
-                  final greeting = Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Hello, $userName 👋",
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      const Text(
-                        "Track your nutrition journey today",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  );
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
-                  final dailyInsight = Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.green.shade200),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.lightbulb, color: Colors.green, size: 30),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '"Take care of your body. It\'s the only place you have to live."',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.black87,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
+                  children: [
 
-                  final dailySummary = Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                    // GREETING
+                    Text(
+                      "Hello, $userName 👋",
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Daily Summary",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 25),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            SummaryCircle(
-                              icon: Icons.local_fire_department,
-                              value: "$totalCalories",
-                              label: "Calories",
-                            ),
-                            SummaryCircle(
-                              icon: Icons.fitness_center,
-                              value: "${totalProtein.toStringAsFixed(0)}g",
-                              label: "Protein",
-                            ),
-                            SummaryCircle(
-                              icon: Icons.water_drop,
-                              value: "${totalWater.toStringAsFixed(1)}L",
-                              label: "Water",
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
 
-                  final waterReminder = Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade400, Colors.blue.shade700],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withOpacity(0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.water_drop, color: Colors.white, size: 28),
-                            const SizedBox(width: 10),
-                            const Text(
-                              "Water Reminder",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            const Spacer(),
-                            Text(
-                              "$_waterGlasses / $_waterGoal",
-                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(_waterGoal, (index) {
-                            final filled = index < _waterGlasses;
-                            return GestureDetector(
-                              onTap: () {
-                                final newGlasses = index + 1;
-                                setState(() {
-                                  _waterGlasses = newGlasses;
-                                  totalWater = newGlasses * 0.25;
-                                });
-                                _logWater(newGlasses);
-                              },
-                              child: Icon(
-                                filled ? Icons.local_drink : Icons.local_drink_outlined,
-                                color: filled ? Colors.white : Colors.white38,
-                                size: 30,
-                              ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 14),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: LinearProgressIndicator(
-                            value: _waterGlasses / _waterGoal,
-                            backgroundColor: Colors.white24,
-                            color: Colors.white,
-                            minHeight: 8,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          _waterGlasses >= _waterGoal
-                              ? "🎉 Great job! You've reached your daily water goal!"
-                              : "💧 Drink ${_waterGoal - _waterGlasses} more glasses to reach your goal",
-                          style: const TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  );
+                    const SizedBox(height: 5),
 
-                  final mealPlanHeader = const Text(
-                    "Today's Meal Plan",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                    const Text(
+                      "Track your nutrition journey today",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
                     ),
-                  );
 
-                  final mealCardsList = Column(
-                    children: [
-                      MealCard(
-                        title: "Breakfast",
-                        subtitle: breakfastTitle,
-                        icon: Icons.breakfast_dining,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/recommendation',
-                            arguments: {'meal_type': 'Breakfast'},
-                          ).then((_) => _loadDashboard());
-                        },
-                      ),
-                      MealCard(
-                        title: "Lunch",
-                        subtitle: lunchTitle,
-                        icon: Icons.lunch_dining,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/recommendation',
-                            arguments: {'meal_type': 'Lunch'},
-                          ).then((_) => _loadDashboard());
-                        },
-                      ),
-                      MealCard(
-                        title: "Dinner",
-                        subtitle: dinnerTitle,
-                        icon: Icons.dinner_dining,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/recommendation',
-                            arguments: {'meal_type': 'Dinner'},
-                          ).then((_) => _loadDashboard());
-                        },
-                      ),
-                      MealCard(
-                        title: "Snack",
-                        subtitle: snackTitle,
-                        icon: Icons.cookie,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/recommendation',
-                            arguments: {'meal_type': 'Snack'},
-                          ).then((_) => _loadDashboard());
-                        },
-                      ),
-                    ],
-                  );
+                    const SizedBox(height: 25),
 
-                  final quickActions = Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Quick Actions",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    // DAILY INSIGHT
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.green.shade200),
                       ),
-                      const SizedBox(height: 20),
-                      Row(
+                      child: const Row(
                         children: [
+                          Icon(Icons.lightbulb, color: Colors.green, size: 30),
+                          SizedBox(width: 12),
                           Expanded(
-                            child: actionCard(
-                              context,
-                              "Progress",
-                              Icons.bar_chart,
-                              '/progress',
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: actionCard(
-                              context,
-                              "Settings",
-                              Icons.settings,
-                              '/settings',
+                            child: Text(
+                              '"Take care of your body. It\'s the only place you have to live."',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.black87,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  );
+                    ),
 
-                  if (isWide) {
-                    return SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1200),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 25),
+
+                    // DAILY SUMMARY CARD
+                    Container(
+                      padding: const EdgeInsets.all(20),
+
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+
+                          const Text(
+                            "Daily Summary",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(height: 25),
+
+                          Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceAround,
+
                             children: [
-                              // Left side columns (Flex 6)
-                              Expanded(
-                                flex: 6,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    greeting,
-                                    const SizedBox(height: 25),
-                                    dailyInsight,
-                                    const SizedBox(height: 25),
-                                    dailySummary,
-                                    const SizedBox(height: 25),
-                                    waterReminder,
-                                    const SizedBox(height: 25),
-                                    quickActions,
-                                  ],
-                                ),
+
+                              SummaryCircle(
+                                icon: Icons.local_fire_department,
+                                value: "$totalCalories",
+                                label: "Calories",
                               ),
-                              const SizedBox(width: 32),
-                              // Right side column for meals (Flex 5)
-                              Expanded(
-                                flex: 5,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    mealPlanHeader,
-                                    const SizedBox(height: 20),
-                                    mealCardsList,
-                                  ],
-                                ),
+
+                              SummaryCircle(
+                                icon: Icons.fitness_center,
+                                value: "${totalProtein.toStringAsFixed(0)}g",
+                                label: "Protein",
+                              ),
+
+                              SummaryCircle(
+                                icon: Icons.water_drop,
+                                value: "${totalWater.toStringAsFixed(1)}L",
+                                label: "Water",
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  }
+                    ),
 
-                  // Default Mobile Layout
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 25),
+
+                    // WATER REMINDER
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.blue.shade400, Colors.blue.shade700],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.25),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.water_drop, color: Colors.white, size: 28),
+                              const SizedBox(width: 10),
+                              const Text(
+                                "Water Reminder",
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              const Spacer(),
+                              Text(
+                                "$_waterGlasses / $_waterGoal",
+                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(_waterGoal, (index) {
+                              final filled = index < _waterGlasses;
+                              return GestureDetector(
+                                onTap: () {
+                                  final newGlasses = index + 1;
+                                  setState(() {
+                                    _waterGlasses = newGlasses;
+                                    totalWater = newGlasses * 0.25;
+                                  });
+                                  _logWater(newGlasses);
+                                },
+                                child: Icon(
+                                  filled ? Icons.local_drink : Icons.local_drink_outlined,
+                                  color: filled ? Colors.white : Colors.white38,
+                                  size: 30,
+                                ),
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 14),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: _waterGlasses / _waterGoal,
+                              backgroundColor: Colors.white24,
+                              color: Colors.white,
+                              minHeight: 8,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _waterGlasses >= _waterGoal
+                                ? "🎉 Great job! You've reached your daily water goal!"
+                                : "💧 Drink ${_waterGoal - _waterGlasses} more glasses to reach your goal",
+                            style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // TODAY MEALS
+                    const Text(
+                      "Today's Meal Plan",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // BREAKFAST
+                    MealCard(
+                      title: "Breakfast",
+                      subtitle: breakfastTitle,
+                      icon: Icons.breakfast_dining,
+
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/recommendation',
+                          arguments: {'meal_type': 'Breakfast'},
+                        ).then((_) => _loadDashboard());
+                      },
+                    ),
+
+                    // LUNCH
+                    MealCard(
+                      title: "Lunch",
+                      subtitle: lunchTitle,
+                      icon: Icons.lunch_dining,
+
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/recommendation',
+                          arguments: {'meal_type': 'Lunch'},
+                        ).then((_) => _loadDashboard());
+                      },
+                    ),
+
+                    // DINNER
+                    MealCard(
+                      title: "Dinner",
+                      subtitle: dinnerTitle,
+                      icon: Icons.dinner_dining,
+
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/recommendation',
+                          arguments: {'meal_type': 'Dinner'},
+                        ).then((_) => _loadDashboard());
+                      },
+                    ),
+
+                    // SNACK
+                    MealCard(
+                      title: "Snack",
+                      subtitle: snackTitle,
+                      icon: Icons.cookie,
+
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/recommendation',
+                          arguments: {'meal_type': 'Snack'},
+                        ).then((_) => _loadDashboard());
+                      },
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // QUICK ACTIONS
+                    const Text(
+                      "Quick Actions",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Row(
                       children: [
-                        greeting,
-                        const SizedBox(height: 25),
-                        dailyInsight,
-                        const SizedBox(height: 25),
-                        dailySummary,
-                        const SizedBox(height: 25),
-                        waterReminder,
-                        const SizedBox(height: 30),
-                        mealPlanHeader,
-                        const SizedBox(height: 20),
-                        mealCardsList,
-                        const SizedBox(height: 30),
-                        quickActions,
+
+                        Expanded(
+                          child: actionCard(
+                            context,
+                            "Progress",
+                            Icons.bar_chart,
+                            '/progress',
+                          ),
+                        ),
+
+                        const SizedBox(width: 15),
+
+                        Expanded(
+                          child: actionCard(
+                            context,
+                            "Settings",
+                            Icons.settings,
+                            '/settings',
+                          ),
+                        ),
                       ],
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
             ),
 

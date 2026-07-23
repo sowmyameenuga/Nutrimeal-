@@ -47,12 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.green.shade50,
-
       appBar: AppBar(
         title: const Text("Login"),
         backgroundColor: Colors.green,
       ),
-
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 800;
@@ -61,20 +59,28 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              if (!isWide) ...[
+                const Center(
+                  child: Icon(Icons.lock, size: 100, color: Colors.green),
+                ),
+                const SizedBox(height: 20),
+              ],
+              Text(
                 "Welcome Back",
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: isWide ? 32 : 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "Enter your details to log into your account.",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 36),
+              if (isWide) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  "Sign in to continue tracking your meals.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+              const SizedBox(height: 30),
               TextField(
                 controller: emailController,
                 decoration: InputDecoration(
@@ -107,6 +113,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -141,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (isWide) {
             return Row(
               children: [
-                // Left Panel: Banner & Gradient
+                // Left Panel: Green Gradient Branding
                 Expanded(
                   flex: 6,
                   child: Container(
@@ -164,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           SizedBox(height: 12),
                           Text(
-                            "Clean Eating, Better Living.",
+                            "Your smart food & health companion",
                             style: TextStyle(fontSize: 18, color: Colors.white70),
                           ),
                         ],
@@ -172,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                // Right Panel: Center form
+                // Right Panel: Login Form
                 Expanded(
                   flex: 5,
                   child: Container(
@@ -190,23 +199,12 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
 
-          // Default Mobile View
-          return SingleChildScrollView(
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              height: constraints.maxHeight,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.lock,
-                    size: 80,
-                    color: Colors.green,
-                  ),
-                  const SizedBox(height: 20),
-                  formFields,
-                ],
-              ),
+          // Mobile layout — unchanged
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [formFields],
             ),
           );
         },
