@@ -127,28 +127,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
 
           children: [
 
-            Container(
-              height: 220,
-              width: double.infinity,
 
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  'https://loremflickr.com/400/300/food,meal?random=${widget.mealId}',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Icon(Icons.restaurant, size: 100, color: Colors.grey));
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
 
             Text(
               widget.title,
