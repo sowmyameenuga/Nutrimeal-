@@ -125,12 +125,25 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
         ? meal['calories'] 
         : int.tryParse(meal['calories'].toString()) ?? 0;
     final double protein = (meal['protein'] ?? 0).toDouble();
+    final double carbs = (meal['carbs'] ?? 0).toDouble();
+    final double fat = (meal['fat'] ?? 0).toDouble();
+
+    // Format current local time without package dependency
+    final now = DateTime.now();
+    final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+    final minute = now.minute.toString().padLeft(2, '0');
+    final period = now.hour >= 12 ? 'PM' : 'AM';
+    final timeStr = '$hour:$minute $period';
 
     final response = await ProgressService.logMeal(
       kcal,
       protein: protein,
+      carbs: carbs,
+      fat: fat,
       title: meal['title'] ?? 'Unknown Meal',
       mealId: meal['id'],
+      date: meal['date'],
+      completionTime: timeStr,
     );
     
     if (mounted) {
@@ -158,14 +171,19 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
           final retryResponse = await ProgressService.logMeal(
             kcal,
             protein: protein,
+            carbs: carbs,
+            fat: fat,
             title: meal['title'] ?? 'Unknown Meal',
             mealId: meal['id'],
             confirmDuplicate: true,
+            date: meal['date'],
+            completionTime: timeStr,
           );
           if (mounted && (retryResponse['statusCode'] == 200 || retryResponse.containsKey('message'))) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Logged ${meal['title']}!"), backgroundColor: Colors.green),
             );
+            _loadSavedMeals();
           }
         }
       } else if (response['statusCode'] == 200 || response.containsKey('message')) {
@@ -175,6 +193,7 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
             backgroundColor: Colors.green,
           ),
         );
+        _loadSavedMeals(); // Reload to update status to Done/Completed dynamically
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response['error'] ?? "Failed to log meal")),
@@ -226,6 +245,9 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
   }
 
   Widget _buildSavedMealCard(dynamic meal, Color color) {
+    final bool isEaten = meal['eaten'] == true;
+    final String? compTime = meal['completion_time'];
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -242,9 +264,13 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
               healthBenefits: meal['health_benefits'],
               recipeSteps: meal['recipe_steps'],
               mealType: meal['meal_type'],
+              eaten: isEaten,
+              completionTime: compTime,
+              date: meal['date'],
+              recommendationReason: meal['recommendation_reason'],
             ),
           ),
-        );
+        ).then((_) => _loadSavedMeals());
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -269,18 +295,39 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => _logAteMeal(meal),
-                    icon: const Icon(Icons.check_circle_outline, size: 16),
-                    label: const Text("I Ate This!", style: TextStyle(fontSize: 12)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
+                  const SizedBox(width: 8),
+                  isEaten
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.green.shade200),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Completed (${compTime ?? 'Today'})",
+                                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ElevatedButton.icon(
+                          onPressed: () => _logAteMeal(meal),
+                          icon: const Icon(Icons.check_circle_outline, size: 16),
+                          label: const Text("I Ate This!", style: TextStyle(fontSize: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
@@ -314,7 +361,6 @@ class _SavedMealsScreenState extends State<SavedMealsScreen> {
       ),
     );
   }
-
 
   Widget _buildMacroPill(String label, String value, Color color) {
     return Container(
