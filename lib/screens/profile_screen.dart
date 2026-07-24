@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/profile_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -27,6 +28,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _weightUnit = "kg"; // "kg" or "lb"
 
   // Validation error messages
+  String? _nameError;
+  String? _ageError;
   String? _heightError;
   String? _weightError;
 
@@ -120,7 +123,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return val;
   }
 
-  /// Validate height and return error string or null
+  // ─── Validation Methods ────────────────────────────────────────────
+
+  String? _validateName() {
+    final name = nameController.text.trim();
+    if (name.isEmpty) return "Please enter your name";
+    if (name.length < 2) return "Name must be at least 2 characters";
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(name)) {
+      return "Name can only contain letters and spaces";
+    }
+    return null;
+  }
+
+  String? _validateAge() {
+    final text = ageController.text.trim();
+    if (text.isEmpty) return "Please enter your age";
+    final age = int.tryParse(text);
+    if (age == null) return "Age must be a number";
+    if (age < 1 || age > 100) return "Age must be between 1 and 100";
+    return null;
+  }
+
   String? _validateHeight() {
     final cm = _getHeightInCm();
     if (cm == null) return "Please enter your height";
@@ -134,7 +157,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null;
   }
 
-  /// Validate weight and return error string or null
   String? _validateWeight() {
     final kg = _getWeightInKg();
     if (kg == null) return "Please enter your weight";
@@ -148,11 +170,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null;
   }
 
+  /// Returns true if the form is currently valid (for enabling/disabling Save button)
+  bool get _isFormValid {
+    return nameController.text.trim().isNotEmpty &&
+        ageController.text.trim().isNotEmpty &&
+        (_heightUnit == "cm"
+            ? heightController.text.trim().isNotEmpty
+            : (heightFeetController.text.trim().isNotEmpty || heightInchesController.text.trim().isNotEmpty)) &&
+        weightController.text.trim().isNotEmpty;
+  }
+
+  // ─── Unit Conversion ───────────────────────────────────────────────
+
   void _onHeightUnitChanged(String newUnit) {
     if (newUnit == _heightUnit) return;
 
     if (_heightUnit == "cm" && newUnit == "ft") {
-      // Convert current cm value to ft/in
       final cm = double.tryParse(heightController.text.trim());
       if (cm != null) {
         _setCmToFeetInches(cm);
@@ -161,7 +194,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         heightInchesController.clear();
       }
     } else if (_heightUnit == "ft" && newUnit == "cm") {
-      // Convert current ft/in to cm
       final cm = _getHeightInCm();
       if (cm != null) {
         heightController.text = cm.toStringAsFixed(1);
@@ -194,16 +226,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  // ─── Save ──────────────────────────────────────────────────────────
+
   Future<void> saveProfile() async {
-    // Validate
+    // Run all validations
+    final nameErr = _validateName();
+    final ageErr = _validateAge();
     final heightErr = _validateHeight();
     final weightErr = _validateWeight();
     setState(() {
+      _nameError = nameErr;
+      _ageError = ageErr;
       _heightError = heightErr;
       _weightError = weightErr;
     });
 
-    if (heightErr != null || weightErr != null) return;
+    if (nameErr != null || ageErr != null || heightErr != null || weightErr != null) return;
 
     setState(() => _isSaving = true);
 
@@ -211,8 +249,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final weightKg = _getWeightInKg()!;
 
     final response = await ProfileService.saveProfile(
-      name: nameController.text,
-      age: ageController.text,
+      name: nameController.text.trim(),
+      age: ageController.text.trim(),
       gender: selectedGender,
       heightCm: heightCm.toStringAsFixed(1),
       weightKg: weightKg.toStringAsFixed(1),
@@ -273,10 +311,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 25),
 
-            textField(controller: nameController, hint: "Full Name", icon: Icons.person),
+            // NAME — letters and spaces only
+            TextField(
+              controller: nameController,
+              keyboardType: TextInputType.name,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                LengthLimitingTextInputFormatter(50),
+              ],
+              decoration: InputDecoration(
+                hintText: "Full Name",
+                prefixIcon: const Icon(Icons.person),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                filled: true,
+                fillColor: Colors.white,
+                errorText: _nameError,
+              ),
+              onChanged: (_) => setState(() => _nameError = null),
+            ),
             const SizedBox(height: 20),
 
-            textField(controller: ageController, hint: "Age", icon: Icons.calendar_today),
+            // AGE — numbers only, 1-100
+            TextField(
+              controller: ageController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(3),
+                _MaxValueInputFormatter(100),
+              ],
+              decoration: InputDecoration(
+                hintText: "Age (1–100)",
+                prefixIcon: const Icon(Icons.calendar_today),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                filled: true,
+                fillColor: Colors.white,
+                errorText: _ageError,
+              ),
+              onChanged: (_) => setState(() => _ageError = null),
+            ),
             const SizedBox(height: 20),
 
             dropdownBox(
@@ -341,8 +414,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: _isSaving ? null : saveProfile,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                // Disable button if form is incomplete
+                onPressed: (_isSaving || !_isFormValid) ? null : saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  disabledBackgroundColor: Colors.grey.shade400,
+                ),
                 child: _isSaving
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
@@ -392,7 +469,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (_heightUnit == "cm")
           TextField(
             controller: heightController,
-            keyboardType: TextInputType.number,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+              LengthLimitingTextInputFormatter(5), // e.g. 250.0
+              _SingleDecimalFormatter(),
+            ],
             decoration: InputDecoration(
               hintText: "Height in cm (e.g. 170)",
               prefixIcon: const Icon(Icons.straighten),
@@ -411,6 +493,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: TextField(
                   controller: heightFeetController,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(1), // max 8 feet
+                    _MaxValueInputFormatter(8),
+                  ],
                   decoration: InputDecoration(
                     hintText: "Feet",
                     suffixText: "ft",
@@ -426,6 +513,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: TextField(
                   controller: heightInchesController,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(2), // max 11 inches
+                    _MaxValueInputFormatter(11),
+                  ],
                   decoration: InputDecoration(
                     hintText: "Inches",
                     suffixText: "in",
@@ -479,7 +571,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: weightController,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+            LengthLimitingTextInputFormatter(6), // e.g. 300.0 or 661.4
+            _SingleDecimalFormatter(),
+          ],
           decoration: InputDecoration(
             hintText: _weightUnit == "kg" ? "Weight in kg (e.g. 65)" : "Weight in lb (e.g. 143)",
             prefixIcon: const Icon(Icons.fitness_center),
@@ -492,23 +589,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onChanged: (_) => setState(() => _weightError = null),
         ),
       ],
-    );
-  }
-
-  Widget textField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-  }) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-        filled: true,
-        fillColor: Colors.white,
-      ),
     );
   }
 
@@ -537,5 +617,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+}
+
+// ─── Custom Input Formatters ─────────────────────────────────────────
+
+/// Prevents entering a value greater than [maxValue].
+class _MaxValueInputFormatter extends TextInputFormatter {
+  final int maxValue;
+
+  _MaxValueInputFormatter(this.maxValue);
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) return newValue;
+    final intVal = int.tryParse(newValue.text);
+    if (intVal == null || intVal > maxValue) {
+      return oldValue;
+    }
+    return newValue;
+  }
+}
+
+/// Allows only one decimal point in the input.
+class _SingleDecimalFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text;
+    // Reject if there are multiple decimal points
+    if ('.'.allMatches(text).length > 1) {
+      return oldValue;
+    }
+    // Reject if it starts with a dot (require leading digit)
+    if (text.startsWith('.')) {
+      return oldValue;
+    }
+    return newValue;
   }
 }
