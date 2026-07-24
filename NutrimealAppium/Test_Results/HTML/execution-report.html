@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nutrimeal — Fallback Failure Report</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d17;
+      color: #e0e0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .card {
+      background: #13131f;
+      border: 1px solid #f4433644;
+      border-top: 4px solid #f44336;
+      border-radius: 16px;
+      padding: 48px 40px;
+      max-width: 680px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon { font-size: 3.5rem; margin-bottom: 16px; }
+    h1 { font-size: 1.6rem; color: #f44336; margin-bottom: 12px; }
+    p  { color: #8899bb; margin-bottom: 8px; font-size: 0.95rem; }
+    .error-box {
+      background: #1a0a0a;
+      border: 1px solid #f4433633;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 24px 0;
+      text-align: left;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #f44336;
+      word-break: break-all;
+    }
+    .meta { font-size: 0.78rem; color: #445566; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🚨</div>
+    <h1>Test Suite — Fatal Setup Failure</h1>
+    <p>The Appium / WebDriverIO test runner encountered a fatal error before any tests could execute.</p>
+    <p>This is an automatically generated fallback report.</p>
+    <div class="error-box">WDIO/Appium fatal setup error — no tests executed.</div>
+    <p><strong>Tests Executed:</strong> 0 / 1,111</p>
+    <p><strong>Pass Rate:</strong> 0.00%</p>
+    <div class="meta">Generated at 2026-06-22T05:28:09.575Z by NutrimealAppium generateFallbackReport.js</div>
+  </div>
+</body>
+</html>

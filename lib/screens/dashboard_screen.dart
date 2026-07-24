@@ -101,22 +101,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 
-  String _formatFullDate(DateTime date) {
-    final weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    final months = [
-      "July", "August", "September", "October", "November", "December",
-      "January", "February", "March", "April", "May", "June"
-    ];
-    // Simple month mapping to handle correct index
-    final monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    final weekday = weekdays[date.weekday - 1];
-    final month = monthNames[date.month - 1];
-    return "$weekday, ${date.day} $month ${date.year}";
-  }
-
   @override
   Widget build(BuildContext context) {
     final dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
@@ -182,7 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
             ),
             TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/person'),
+              onPressed: () => Navigator.pushNamed(context, '/profile'),
               icon: const Icon(Icons.person, size: 18),
               label: const Text("Profile"),
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
@@ -216,12 +200,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 5),
 
-                    const Text(
-                      "Track your nutrition journey",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          _isToday(_selectedDate)
+                              ? "Today's Plan"
+                              : "Plan for ${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (!_isToday(_selectedDate)) ...[
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedDate = DateTime.now();
+                              });
+                              _loadDashboard();
+                            },
+                            child: const Text(
+                              "Go to Today",
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
 
                     const SizedBox(height: 25),
@@ -420,73 +430,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 25),
 
-                    // DATE SELECTOR ABOVE PLAN
-                    GestureDetector(
-                      onTap: () async {
-                        final selected = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDate,
-                          firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
-                        );
-                        if (selected != null) {
-                          setState(() {
-                            _selectedDate = selected;
-                          });
-                          _loadDashboard();
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.calendar_month, color: Colors.green, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              "📅 ${_formatFullDate(_selectedDate)} ▼",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    if (!_isToday(_selectedDate)) ...[
-                      const SizedBox(height: 10),
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _selectedDate = DateTime.now();
-                          });
-                          _loadDashboard();
-                        },
-                        icon: const Icon(Icons.today, color: Colors.green, size: 18),
-                        label: const Text("Go to Today", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-
-                    const SizedBox(height: 20),
-
-                    // MEAL PLAN TITLE
-                    Text(
-                      _isToday(_selectedDate) ? "Today's Meal Plan" : "Meal Plan for ${_formatFullDate(_selectedDate)}",
-                      style: const TextStyle(
+                    // TODAY'S MEAL PLAN
+                    const Text(
+                      "Today's Meal Plan",
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -523,7 +470,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 eaten: breakfastMeal!['eaten'] ?? false,
                                 completionTime: breakfastMeal!['completion_time'],
                                 date: dateStr,
-                                recommendationReason: breakfastMeal!['recommendation_reason'],
                               ),
                             ),
                           ).then((_) => _loadDashboard());
@@ -566,7 +512,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 eaten: lunchMeal!['eaten'] ?? false,
                                 completionTime: lunchMeal!['completion_time'],
                                 date: dateStr,
-                                recommendationReason: lunchMeal!['recommendation_reason'],
                               ),
                             ),
                           ).then((_) => _loadDashboard());
@@ -609,7 +554,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 eaten: dinnerMeal!['eaten'] ?? false,
                                 completionTime: dinnerMeal!['completion_time'],
                                 date: dateStr,
-                                recommendationReason: dinnerMeal!['recommendation_reason'],
                               ),
                             ),
                           ).then((_) => _loadDashboard());
@@ -652,7 +596,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 eaten: snackMeal!['eaten'] ?? false,
                                 completionTime: snackMeal!['completion_time'],
                                 date: dateStr,
-                                recommendationReason: snackMeal!['recommendation_reason'],
                               ),
                             ),
                           ).then((_) => _loadDashboard());
@@ -915,7 +858,7 @@ class MealCard extends StatelessWidget {
               Text(
                 status!,
                 style: TextStyle(
-                  color: status!.contains("Eaten") || status!.contains("Completed") ? Colors.green : Colors.orange,
+                  color: status!.contains("Eaten") ? Colors.green : Colors.orange,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
