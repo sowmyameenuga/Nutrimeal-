@@ -89683,7 +89683,7 @@ if(l==null)l=2000
 k=o.h(0,"water_litres")
 k=J.hg(k==null?0:k)
 j=o.h(0,"water_target")
-j=J.hg(j==null?3:j)
+j=J.hg(j==null?4:j)
 i=o.h(0,"current_weight")
 i=J.hg(i==null?0:i)
 h=o.h(0,"weight_goal")
