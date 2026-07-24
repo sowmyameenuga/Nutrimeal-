@@ -96,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _logWater(int glasses) async {
-    final litres = glasses * 0.25; // 1 glass = 250ml
+    final litres = glasses * 0.5; // 1 glass = 500ml
     await ApiService.post(
       '/progress/log',
       body: {'water_litres': litres},
@@ -335,7 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   final newGlasses = index + 1;
                                   setState(() {
                                     _waterGlasses = newGlasses;
-                                    totalWater = newGlasses * 0.25;
+                                    totalWater = newGlasses * 0.5;
                                   });
                                   _logWater(newGlasses);
                                 },
