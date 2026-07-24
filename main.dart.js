@@ -29639,11 +29639,11 @@ s=1
 break
 case 1:return A.C(q,r)}})
 return A.D($async$afN,r)},
-vu(a,b,c,d,e,f,g){var s=0,r=A.E(t.P),q
-var $async$vu=A.F(function(h,i){if(h===1)return A.B(i,r)
+vu(a,b,c,d,e,f,g,h,i){var s=0,r=A.E(t.P),q
+var $async$vu=A.F(function(j,k){if(j===1)return A.B(k,r)
 for(;;)switch(s){case 0:s=3
-return A.w(A.fM("/progress/log_meal",!0,A.a3(["calories",a,"protein",f,"title",g,"meal_id",e,"confirm_duplicate",c,"date",d,"completion_time",b],t.N,t.z)),$async$vu)
-case 3:q=i
+return A.w(A.fM("/progress/log_meal",!0,A.a3(["calories",a,"protein",h,"carbs",b,"fat",f,"title",i,"meal_id",g,"confirm_duplicate",d,"date",e,"completion_time",c],t.N,t.z)),$async$vu)
+case 3:q=k
 s=1
 break
 case 1:return A.C(q,r)}})
@@ -94337,66 +94337,68 @@ $3(a,b,c){var s=null
 return A.c6(s,B.LD,B.p,B.bK,s,s,s,220,s,s,s,s,s)},
 $S:583}
 A.arF.prototype={
-$0(){var s=0,r=A.E(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1,a2,a3,a4,a5
-var $async$$0=A.F(function(a6,a7){if(a6===1){p.push(a7)
+$0(){var s=0,r=A.E(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9
+var $async$$0=A.F(function(b0,b1){if(b0===1){p.push(b1)
 s=q}for(;;)switch(s){case 0:q=3
-c=A.c4("[^0-9]",!1)
-n=A.jP(A.dh(o.b,c,""),null)
-c=A.c4("[^0-9.]",!1)
-b=A.fy(A.dh(o.c,c,""))
-m=b==null?0:b
-c=A.c4("[^0-9.]",!1)
-A.fy(A.dh(o.d,c,""))
-c=A.c4("[^0-9.]",!1)
-A.fy(A.dh(o.e,c,""))
-l=new A.cC(Date.now(),0,!1)
-if(A.vr(l)>12)a=A.vr(l)-12
-else a=A.vr(l)===0?12:A.vr(l)
-k=a
-j=B.c.iP(B.f.k(A.aEq(l)),2,"0")
-i=A.vr(l)>=12?"PM":"AM"
-h=A.j(k)+":"+A.j(j)+" "+A.j(i)
-c=o.a
-a0=c.a
-a1=a0.d
-a2=a0.c
+a=A.c4("[^0-9]",!1)
+n=A.jP(A.dh(o.b,a,""),null)
+a=A.c4("[^0-9.]",!1)
+a0=A.fy(A.dh(o.c,a,""))
+m=a0==null?0:a0
+a=A.c4("[^0-9.]",!1)
+a1=A.fy(A.dh(o.d,a,""))
+l=a1==null?0:a1
+a=A.c4("[^0-9.]",!1)
+a2=A.fy(A.dh(o.e,a,""))
+k=a2==null?0:a2
+j=new A.cC(Date.now(),0,!1)
+if(A.vr(j)>12)a3=A.vr(j)-12
+else a3=A.vr(j)===0?12:A.vr(j)
+i=a3
+h=B.c.iP(B.f.k(A.aEq(j)),2,"0")
+g=A.vr(j)>=12?"PM":"AM"
+f=A.j(i)+":"+A.j(h)+" "+A.j(g)
+a=o.a
+a4=a.a
+a5=a4.d
+a6=a4.c
 s=6
-return A.w(A.vu(n,h,!1,a0.ax,a2,m,a1),$async$$0)
-case 6:g=a7
-a0=o.f
-s=a0.e!=null?7:8
+return A.w(A.vu(n,l,f,!1,a4.ax,k,a6,m,a5),$async$$0)
+case 6:e=b1
+a4=o.f
+s=a4.e!=null?7:8
 break
-case 7:s=J.d(J.cS(g,"statusCode"),409)?9:11
+case 7:s=J.d(J.cS(e,"statusCode"),409)?9:11
 break
 case 9:s=12
-return A.w(A.mM(null,null,!0,null,new A.arA(g),a0,null,!0,t.y),$async$$0)
-case 12:f=a7
-s=J.d(f,!0)?13:14
+return A.w(A.mM(null,null,!0,null,new A.arA(e),a4,null,!0,t.y),$async$$0)
+case 12:d=b1
+s=J.d(d,!0)?13:14
 break
-case 13:a1=c.a
-a2=a1.d
-a3=a1.c
+case 13:a5=a.a
+a6=a5.d
+a7=a5.c
 s=15
-return A.w(A.vu(n,h,!0,a1.ax,a3,m,a2),$async$$0)
-case 15:e=a7
-if(a0.e!=null)a1=J.d(J.cS(e,"statusCode"),200)||e.ap("message")
-else a1=!1
-if(a1){c.M(new A.arB(c,h))
-a0.X(t.J).f.cj(B.C5)}case 14:s=10
+return A.w(A.vu(n,l,f,!0,a5.ax,k,a7,m,a6),$async$$0)
+case 15:c=b1
+if(a4.e!=null)a5=J.d(J.cS(c,"statusCode"),200)||c.ap("message")
+else a5=!1
+if(a5){a.M(new A.arB(a,f))
+a4.X(t.J).f.cj(B.C5)}case 14:s=10
 break
-case 11:a1=J.d(J.cS(g,"statusCode"),200)||g.ap("message")
-a2=t.J
-if(a1){c.M(new A.arC(c,h))
-a0.X(a2).f.cj(B.C5)}else{c=a0.X(a2).f
-a0=J.cS(g,"error")
-c.cj(A.eK(null,null,null,null,null,B.l,null,A.aj(a0==null?"Failed to log meal":a0,null,null,null,null,null,null,null),null,B.a1,null,null,null,null,null,null,null,null,null,null))}case 10:case 8:q=1
+case 11:a5=J.d(J.cS(e,"statusCode"),200)||e.ap("message")
+a6=t.J
+if(a5){a.M(new A.arC(a,f))
+a4.X(a6).f.cj(B.C5)}else{a=a4.X(a6).f
+a4=J.cS(e,"error")
+a.cj(A.eK(null,null,null,null,null,B.l,null,A.aj(a4==null?"Failed to log meal":a4,null,null,null,null,null,null,null),null,B.a1,null,null,null,null,null,null,null,null,null,null))}case 10:case 8:q=1
 s=5
 break
 case 3:q=2
-a5=p.pop()
-d=A.aa(a5)
-c=o.f
-if(c.e!=null)c.X(t.J).f.cj(A.eK(null,null,null,null,null,B.l,null,A.aj("Could not log meal: "+A.j(d),null,null,null,null,null,null,null),null,B.a1,null,null,null,null,null,null,null,null,null,null))
+a9=p.pop()
+b=A.aa(a9)
+a=o.f
+if(a.e!=null)a.X(t.J).f.cj(A.eK(null,null,null,null,null,B.l,null,A.aj("Could not log meal: "+A.j(b),null,null,null,null,null,null,null),null,B.a1,null,null,null,null,null,null,null,null,null,null))
 s=5
 break
 case 2:s=1
@@ -95659,7 +95661,7 @@ o=J.fL(i==null?0:i)
 i=j.h(a,"title")
 if(i==null)i="Unknown Meal"
 s=2
-return A.w(A.vu(p,null,!1,null,j.h(a,"id"),o,i),$async$qt)
+return A.w(A.vu(p,0,null,!1,null,0,j.h(a,"id"),o,i),$async$qt)
 case 2:n=c
 s=q.c!=null?3:4
 break
@@ -95674,7 +95676,7 @@ break
 case 8:i=j.h(a,"title")
 if(i==null)i="Unknown Meal"
 s=11
-return A.w(A.vu(p,null,!0,null,j.h(a,"id"),o,i),$async$qt)
+return A.w(A.vu(p,0,null,!0,null,0,j.h(a,"id"),o,i),$async$qt)
 case 11:m=c
 if(q.c!=null)i=J.d(m.h(0,"statusCode"),200)||m.ap("message")
 else i=!1
