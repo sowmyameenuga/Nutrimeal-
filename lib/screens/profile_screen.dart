@@ -51,6 +51,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfile();
+
+    // Listeners for real-time validation & enabling/disabling submit button
+    nameController.addListener(_validateFieldsRealtime);
+    ageController.addListener(_validateFieldsRealtime);
+    heightController.addListener(_validateFieldsRealtime);
+    weightController.addListener(_validateFieldsRealtime);
+    heightFeetController.addListener(_validateFieldsRealtime);
+    heightInchesController.addListener(_validateFieldsRealtime);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    ageController.dispose();
+    heightController.dispose();
+    weightController.dispose();
+    heightFeetController.dispose();
+    heightInchesController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProfile() async {
@@ -91,6 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         selectedDiet = response['diet'] ?? selectedDiet;
       });
     }
+    _validateFieldsRealtime();
   }
 
   void _setCmToFeetInches(double cm) {
@@ -145,12 +165,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String? _validateHeight() {
-    final cm = _getHeightInCm();
-    if (cm == null) return "Please enter your height";
-    if (cm < _minHeightCm || cm > _maxHeightCm) {
-      if (_heightUnit == "cm") {
+    if (_heightUnit == "cm") {
+      final text = heightController.text.trim();
+      if (text.isEmpty) return "Please enter your height";
+      final cm = double.tryParse(text);
+      if (cm == null) return "Height must be a number";
+      if (cm < _minHeightCm || cm > _maxHeightCm) {
         return "Height must be between ${_minHeightCm.toInt()}–${_maxHeightCm.toInt()} cm";
-      } else {
+      }
+    } else {
+      final feetText = heightFeetController.text.trim();
+      final inchesText = heightInchesController.text.trim();
+      if (feetText.isEmpty && inchesText.isEmpty) return "Please enter your height";
+      final feet = int.tryParse(feetText) ?? 0;
+      final inches = int.tryParse(inchesText) ?? 0;
+      if (feet < 1 || feet > 8) return "Feet must be between 1 and 8";
+      if (inches < 0 || inches > 11) return "Inches must be between 0 and 11";
+      final cm = (feet * _cmPerFoot) + (inches * _cmPerInch);
+      if (cm < _minHeightCm || cm > _maxHeightCm) {
         return "Height must be between 1'8\" – 8'2\"";
       }
     }
@@ -158,8 +190,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String? _validateWeight() {
+    final text = weightController.text.trim();
+    if (text.isEmpty) return "Please enter your weight";
+    final val = double.tryParse(text);
+    if (val == null) return "Weight must be a number";
+    
     final kg = _getWeightInKg();
-    if (kg == null) return "Please enter your weight";
+    if (kg == null) return "Weight must be a number";
+
     if (kg < _minWeightKg || kg > _maxWeightKg) {
       if (_weightUnit == "kg") {
         return "Weight must be between ${_minWeightKg.toInt()}–${_maxWeightKg.toInt()} kg";
@@ -170,9 +208,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null;
   }
 
-  /// Returns true if the form is currently valid (for enabling/disabling Save button)
+  void _validateFieldsRealtime() {
+    setState(() {
+      _nameError = _validateName();
+      _ageError = _validateAge();
+      _heightError = _validateHeight();
+      _weightError = _validateWeight();
+    });
+  }
+
+  /// Returns true if all fields are valid
   bool get _isFormValid {
-    return nameController.text.trim().isNotEmpty &&
+    return _nameError == null &&
+        _ageError == null &&
+        _heightError == null &&
+        _weightError == null &&
+        nameController.text.trim().isNotEmpty &&
         ageController.text.trim().isNotEmpty &&
         (_heightUnit == "cm"
             ? heightController.text.trim().isNotEmpty
@@ -206,6 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _heightUnit = newUnit;
       _heightError = null;
     });
+    _validateFieldsRealtime();
   }
 
   void _onWeightUnitChanged(String newUnit) {
@@ -224,24 +276,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _weightUnit = newUnit;
       _weightError = null;
     });
+    _validateFieldsRealtime();
   }
 
   // ─── Save ──────────────────────────────────────────────────────────
 
   Future<void> saveProfile() async {
-    // Run all validations
-    final nameErr = _validateName();
-    final ageErr = _validateAge();
-    final heightErr = _validateHeight();
-    final weightErr = _validateWeight();
-    setState(() {
-      _nameError = nameErr;
-      _ageError = ageErr;
-      _heightError = heightErr;
-      _weightError = weightErr;
-    });
-
-    if (nameErr != null || ageErr != null || heightErr != null || weightErr != null) return;
+    _validateFieldsRealtime();
+    if (!_isFormValid) return;
 
     setState(() => _isSaving = true);
 
@@ -327,18 +369,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 fillColor: Colors.white,
                 errorText: _nameError,
               ),
-              onChanged: (_) => setState(() => _nameError = null),
             ),
             const SizedBox(height: 20),
 
-            // AGE — numbers only, 1-100
+            // AGE — whole numbers only, 1-100
             TextField(
               controller: ageController,
               keyboardType: TextInputType.number,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(3),
-                _MaxValueInputFormatter(100),
+                _RangeValueInputFormatter(1, 100),
               ],
               decoration: InputDecoration(
                 hintText: "Age (1–100)",
@@ -348,7 +389,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 fillColor: Colors.white,
                 errorText: _ageError,
               ),
-              onChanged: (_) => setState(() => _ageError = null),
             ),
             const SizedBox(height: 20),
 
@@ -414,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                // Disable button if form is incomplete
+                // Disable button if form contains any invalid values
                 onPressed: (_isSaving || !_isFormValid) ? null : saveProfile,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -472,11 +512,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
-              LengthLimitingTextInputFormatter(5), // e.g. 250.0
+              LengthLimitingTextInputFormatter(5), // limit input to max 5 characters
               _SingleDecimalFormatter(),
             ],
             decoration: InputDecoration(
-              hintText: "Height in cm (e.g. 170)",
+              hintText: "Height in cm (e.g. 170.5)",
               prefixIcon: const Icon(Icons.straighten),
               suffixText: "cm",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
@@ -484,53 +524,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fillColor: Colors.white,
               errorText: _heightError,
             ),
-            onChanged: (_) => setState(() => _heightError = null),
           )
         else
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: heightFeetController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(1), // max 8 feet
-                    _MaxValueInputFormatter(8),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: "Feet",
-                    suffixText: "ft",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    filled: true,
-                    fillColor: Colors.white,
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: heightFeetController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(1),
+                        _RangeValueInputFormatter(1, 8),
+                      ],
+                      decoration: InputDecoration(
+                        hintText: "Feet (1–8)",
+                        suffixText: "ft",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
                   ),
-                  onChanged: (_) => setState(() => _heightError = null),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: heightInchesController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2), // max 11 inches
-                    _MaxValueInputFormatter(11),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: "Inches",
-                    suffixText: "in",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    filled: true,
-                    fillColor: Colors.white,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: heightInchesController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                        _RangeValueInputFormatter(0, 11),
+                      ],
+                      decoration: InputDecoration(
+                        hintText: "Inches (0–11)",
+                        suffixText: "in",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
                   ),
-                  onChanged: (_) => setState(() => _heightError = null),
-                ),
+                ],
               ),
             ],
           ),
-        if (_heightError != null && _heightUnit == "ft")
+        if (_heightError != null)
           Padding(
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(_heightError!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
@@ -574,11 +616,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
-            LengthLimitingTextInputFormatter(6), // e.g. 300.0 or 661.4
+            LengthLimitingTextInputFormatter(5), // limit input to max 5 characters
             _SingleDecimalFormatter(),
           ],
           decoration: InputDecoration(
-            hintText: _weightUnit == "kg" ? "Weight in kg (e.g. 65)" : "Weight in lb (e.g. 143)",
+            hintText: _weightUnit == "kg" ? "Weight in kg (e.g. 52.5)" : "Weight in lb (e.g. 115.7)",
             prefixIcon: const Icon(Icons.fitness_center),
             suffixText: _weightUnit,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
@@ -586,7 +628,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fillColor: Colors.white,
             errorText: _weightError,
           ),
-          onChanged: (_) => setState(() => _weightError = null),
         ),
       ],
     );
@@ -622,18 +663,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 // ─── Custom Input Formatters ─────────────────────────────────────────
 
-/// Prevents entering a value greater than [maxValue].
-class _MaxValueInputFormatter extends TextInputFormatter {
-  final int maxValue;
+/// Restricts entering a value outside [min] and [max].
+class _RangeValueInputFormatter extends TextInputFormatter {
+  final int min;
+  final int max;
 
-  _MaxValueInputFormatter(this.maxValue);
+  _RangeValueInputFormatter(this.min, this.max);
 
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.text.isEmpty) return newValue;
     final intVal = int.tryParse(newValue.text);
-    if (intVal == null || intVal > maxValue) {
+    if (intVal == null || intVal > max) {
       return oldValue;
     }
     return newValue;
