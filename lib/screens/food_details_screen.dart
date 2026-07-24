@@ -16,6 +16,7 @@ class FoodDetailsScreen extends StatefulWidget {
   final bool eaten;
   final String? completionTime;
   final String? date;
+  final String? recommendationReason;
 
   const FoodDetailsScreen({
     super.key,
@@ -32,6 +33,7 @@ class FoodDetailsScreen extends StatefulWidget {
     this.eaten = false,
     this.completionTime,
     this.date,
+    this.recommendationReason,
   });
 
   @override
@@ -42,6 +44,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   String ingredients = "Loading...";
   String healthBenefits = "Loading...";
   String recipeSteps = "";
+  String recommendationReason = "";
   bool _isLoading = true;
   bool _eaten = false;
   String? _completionTime;
@@ -63,16 +66,43 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         .replaceAll('â€\u009d', '"');
   }
 
+  String _cleanMacro(String label, String val) {
+    String clean = val.replaceAll(RegExp(r'^(Protein|Carbs|Fat):\s*'), '');
+    clean = clean.replaceAll(RegExp(r'\s*g$'), '');
+    clean = clean.replaceAll(RegExp(r'\s*kcal$'), '');
+    if (clean.toLowerCase().contains("null") || clean.toLowerCase().contains("nan") || clean.toLowerCase().contains("undefined") || clean.trim().isEmpty) {
+      return label == "Calories" ? "0 kcal" : "0g";
+    }
+    if (label == "Calories") {
+      return "$clean kcal";
+    }
+    return "${clean}g";
+  }
+
+  String _getMealImageUrl(String? type) {
+    final t = type?.toLowerCase() ?? '';
+    if (t.contains('breakfast')) {
+      return "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop";
+    } else if (t.contains('lunch')) {
+      return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop";
+    } else if (t.contains('dinner')) {
+      return "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&auto=format&fit=crop";
+    } else {
+      return "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=600&auto=format&fit=crop"; // snack
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _eaten = widget.eaten;
     _completionTime = widget.completionTime;
+    recommendationReason = widget.recommendationReason ?? "Recommended based on your health profile and nutritional goals.";
     _loadDetails();
   }
 
   Future<void> _loadDetails() async {
-    // If details were passed directly (e.g. from Recommendations), use them
+    // If details were passed directly, use them
     if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {
       if (!mounted) return;
       setState(() {
@@ -84,7 +114,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
       return;
     }
 
-    // Otherwise fetch from API (e.g. from Dashboard)
+    // Fetch from API
     final response = await MealService.getMealDetails(widget.mealId);
 
     if (!mounted) return;
@@ -94,6 +124,9 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         ingredients = response['ingredients'] ?? "No ingredients listed";
         healthBenefits = response['health_benefits'] ?? "No benefits listed";
         recipeSteps = response['recipe_steps'] ?? "";
+        if (response.containsKey('recommendation_reason') && response['recommendation_reason'] != null) {
+          recommendationReason = response['recommendation_reason'];
+        }
         _isLoading = false;
       });
     } else {
@@ -106,6 +139,12 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     final cleanIngredients = _fixEncoding(ingredients);
     final cleanBenefits = _fixEncoding(healthBenefits);
     final cleanSteps = _fixEncoding(recipeSteps);
+    final cleanReason = _fixEncoding(recommendationReason);
+
+    final cleanCalories = _cleanMacro("Calories", widget.calories);
+    final cleanProtein = _cleanMacro("Protein", widget.protein);
+    final cleanCarbs = _cleanMacro("Carbs", widget.carbs);
+    final cleanFat = _cleanMacro("Fat", widget.fat);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -131,6 +170,25 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Meal Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.network(
+                _getMealImageUrl(widget.mealType),
+                height: 220,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 220,
+                    color: Colors.green.shade50,
+                    child: const Icon(Icons.restaurant, size: 50, color: Colors.green),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Title & Calories
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,7 +203,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                   ),
                 ),
                 Text(
-                  widget.calories,
+                  cleanCalories,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -160,10 +218,38 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                nutrition("Protein", widget.protein),
-                nutrition("Carbs", widget.carbs),
-                nutrition("Fat", widget.fat),
+                nutrition("Protein", cleanProtein),
+                nutrition("Carbs", cleanCarbs),
+                nutrition("Fat", cleanFat),
               ],
+            ),
+            const SizedBox(height: 30),
+
+            // AI Recommendation Reason
+            const Text(
+              "AI Recommendation Reason",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.shade100),
+              ),
+              child: Text(
+                cleanReason,
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.4,
+                  color: Colors.green.shade900,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ),
             const SizedBox(height: 30),
 
@@ -200,7 +286,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             // Recipe Steps
             if (cleanSteps.isNotEmpty) ...[
               const Text(
-                "Recipe",
+                "Recipe Steps",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -215,49 +301,6 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             ],
 
             // Action Buttons
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (widget.recipeSteps != null && widget.recipeSteps!.isNotEmpty) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Recipe Instructions"),
-                        content: SingleChildScrollView(
-                          child: Text(cleanSteps),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Close"),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Recipe not available yet"),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                ),
-                child: const Text(
-                  "View Recipe",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -277,8 +320,10 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                   : ElevatedButton.icon(
                 onPressed: () async {
                   try {
-                    final int kcal = int.parse(widget.calories.replaceAll(RegExp(r'[^0-9]'), ''));
-                    final double pGrams = double.tryParse(widget.protein.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+                    final int kcal = int.parse(cleanCalories.replaceAll(RegExp(r'[^0-9]'), ''));
+                    final double pGrams = double.tryParse(cleanProtein.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+                    final double cGrams = double.tryParse(cleanCarbs.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+                    final double fGrams = double.tryParse(cleanFat.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
                     
                     // Format current local time without package dependency
                     final now = DateTime.now();
@@ -370,43 +415,49 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             ),
             const SizedBox(height: 15),
 
+            // Replace Meal Button
             SizedBox(
               width: double.infinity,
               height: 55,
               child: OutlinedButton.icon(
                 onPressed: () async {
                   try {
-                    await MealService.saveMeal({
-                      'meal_type': widget.mealType ?? 'snack',
-                      'title': widget.title,
-                      'calories': int.parse(widget.calories.replaceAll(RegExp(r'[^0-9]'), '')),
-                      'protein': double.parse(widget.protein.replaceAll(RegExp(r'[^0-9.]'), '')),
-                      'carbs': double.parse(widget.carbs.replaceAll(RegExp(r'[^0-9.]'), '')),
-                      'fat': double.parse(widget.fat.replaceAll(RegExp(r'[^0-9.]'), '')),
-                      'ingredients': widget.ingredients ?? '',
-                      'recipe_steps': widget.recipeSteps ?? '',
-                      'health_benefits': widget.healthBenefits ?? '',
-                    });
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Meal added to Today's Plan!"), backgroundColor: Colors.blue),
-                      );
+                    setState(() => _isLoading = true);
+                    final response = await MealService.replaceMeal(
+                      widget.mealType ?? 'snack',
+                      widget.date ?? DateTime.now().toIso8601String().split('T')[0],
+                    );
+                    if (response['statusCode'] == 200) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Meal replaced successfully!"), backgroundColor: Colors.green),
+                        );
+                        Navigator.pop(context);
+                      }
+                    } else {
+                      setState(() => _isLoading = false);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Could not replace meal: ${response['error'] ?? 'Unknown error'}")),
+                        );
+                      }
                     }
                   } catch (e) {
+                    setState(() => _isLoading = false);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Could not add meal to plan: $e")),
+                        SnackBar(content: Text("Error: $e")),
                       );
                     }
                   }
                 },
-                icon: const Icon(Icons.bookmark_add, color: Colors.blue),
+                icon: const Icon(Icons.refresh, color: Colors.orange),
                 label: const Text(
-                  "Add to Today's Plan",
-                  style: TextStyle(color: Colors.blue, fontSize: 18),
+                  "Replace Meal",
+                  style: TextStyle(color: Colors.orange, fontSize: 18),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.blue, width: 2),
+                  side: const BorderSide(color: Colors.orange, width: 2),
                 ),
               ),
             ),

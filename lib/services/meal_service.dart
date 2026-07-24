@@ -62,5 +62,13 @@ class MealService {
   static Future<Map<String, dynamic>> deleteMeal(int mealId) async {
     return await ApiService.delete('/meals/$mealId');
   }
+
+  /// Replace a meal with a suitable AI recommendation.
+  static Future<Map<String, dynamic>> replaceMeal(String mealType, String date) async {
+    return await ApiService.post('/meals/replace', body: {
+      'meal_type': mealType,
+      'date': date,
+    });
+  }
 }
 

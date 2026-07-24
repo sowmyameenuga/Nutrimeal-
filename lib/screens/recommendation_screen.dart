@@ -352,6 +352,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
                     ingredients: meal.ingredients,
                     recipeSteps: meal.recipeSteps,
                     healthBenefits: meal.healthBenefits,
+                    recommendationReason: meal.recommendationReason,
                   ),
                 ),
               );

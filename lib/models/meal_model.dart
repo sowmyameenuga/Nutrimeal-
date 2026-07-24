@@ -11,6 +11,7 @@ class MealModel {
   final String healthBenefits;
   final String recipeSteps;
   final String? date;
+  final String recommendationReason;
 
   MealModel({
     required this.id,
@@ -25,6 +26,7 @@ class MealModel {
     this.healthBenefits = '',
     this.recipeSteps = '',
     this.date,
+    this.recommendationReason = '',
   });
 
   factory MealModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class MealModel {
       healthBenefits: json['health_benefits'] ?? '',
       recipeSteps: json['recipe_steps'] ?? '',
       date: json['date'],
+      recommendationReason: json['recommendation_reason'] ?? '',
     );
   }
 
@@ -58,6 +61,7 @@ class MealModel {
       'health_benefits': healthBenefits,
       'recipe_steps': recipeSteps,
       'date': date,
+      'recommendation_reason': recommendationReason,
     };
   }
 
