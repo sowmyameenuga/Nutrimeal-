@@ -457,7 +457,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => _saveMeal(meal, category),
                 icon: const Icon(Icons.add_circle_outline, size: 20),
-                label: const Text("Save to My Plan"),
+                label: const Text("Add to Today's Plan"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
                   foregroundColor: Colors.white,

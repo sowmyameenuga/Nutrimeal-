@@ -37,31 +37,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
 
     if (response['statusCode'] == 200) {
-      final summary = response['daily_summary'] ?? {};
-      final meals = response['today_meals'] ?? {};
-
-      // If no meals exist, trigger generation
-      if (_isMealsEmpty(meals)) {
-        await MealService.getTodayMeals();
-        // Re-fetch dashboard
-        final refreshed = await DashboardService.getDashboardData();
-        if (!mounted) return;
-        if (refreshed['statusCode'] == 200) {
-          _applyData(refreshed);
-        }
-      } else {
-        _applyData(response);
-      }
+      _applyData(response);
     }
 
     if (mounted) setState(() => _isLoading = false);
-  }
-
-  bool _isMealsEmpty(Map<String, dynamic> meals) {
-    final b = meals['breakfast'] as List? ?? [];
-    final l = meals['lunch'] as List? ?? [];
-    final d = meals['dinner'] as List? ?? [];
-    return b.isEmpty && l.isEmpty && d.isEmpty;
   }
 
   void _applyData(Map<String, dynamic> response) {

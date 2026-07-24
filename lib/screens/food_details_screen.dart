@@ -377,20 +377,20 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                     });
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Meal saved to Today's Plan!"), backgroundColor: Colors.blue),
+                        const SnackBar(content: Text("Meal added to Today's Plan!"), backgroundColor: Colors.blue),
                       );
                     }
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Could not save meal: $e")),
+                        SnackBar(content: Text("Could not add meal to plan: $e")),
                       );
                     }
                   }
                 },
                 icon: const Icon(Icons.bookmark_add, color: Colors.blue),
                 label: const Text(
-                  "Save Meal",
+                  "Add to Today's Plan",
                   style: TextStyle(color: Colors.blue, fontSize: 18),
                 ),
                 style: OutlinedButton.styleFrom(
