@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from models import db, User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -136,16 +136,11 @@ def reset_password():
 
 
 @auth_bp.route("/change-password", methods=["PUT"])
+@jwt_required()
 def change_password():
     """Change password for an authenticated user."""
-    from flask_jwt_extended import jwt_required, get_jwt_identity
-    from flask_jwt_extended.view_decorators import verify_jwt_in_request
-    
-    # We use verify_jwt_in_request() here since this route is not decorated directly
-    # because of blueprint scoping issues if jwt_required is imported top-level.
-    verify_jwt_in_request()
     user_id = int(get_jwt_identity())
-    
+
     data = request.get_json() or {}
     old_password = data.get("old_password", "")
     new_password = data.get("new_password", "")
@@ -170,19 +165,16 @@ def change_password():
 
 
 @auth_bp.route("/account", methods=["DELETE"])
+@jwt_required()
 def delete_account():
     """Permanently delete the authenticated user's account and all data."""
-    from flask_jwt_extended import jwt_required, get_jwt_identity
-    from flask_jwt_extended.view_decorators import verify_jwt_in_request
-    
-    verify_jwt_in_request()
     user_id = int(get_jwt_identity())
-    
+
     user = User.query.get(user_id)
     if user is None:
         return jsonify({"error": "User not found"}), 404
-        
+
     db.session.delete(user)
     db.session.commit()
-    
+
     return jsonify({"message": "Account deleted successfully"}), 200
