@@ -23,7 +23,7 @@ class ProgressModel {
       caloriesConsumed: json['calories_consumed'] ?? 0,
       calorieTarget: json['calorie_target'] ?? 2000,
       waterLitres: (json['water_litres'] ?? 0).toDouble(),
-      waterTarget: (json['water_target'] ?? 3.0).toDouble(),
+      waterTarget: (json['water_target'] ?? 4.0).toDouble(),
       currentWeight: (json['current_weight'] ?? 0).toDouble(),
       weightGoal: (json['weight_goal'] ?? 0).toDouble(),
     );
