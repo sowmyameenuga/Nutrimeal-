@@ -82,6 +82,8 @@ class MealPlan(db.Model):
     health_benefits = db.Column(db.Text, default="")
     recipe_steps = db.Column(db.Text, default="")
     date = db.Column(db.Date, default=date.today)
+    eaten = db.Column(db.Boolean, default=False)
+    completion_time = db.Column(db.String(50), nullable=True)
 
     def to_dict(self):
         return {
@@ -97,6 +99,8 @@ class MealPlan(db.Model):
             "health_benefits": self.health_benefits,
             "recipe_steps": self.recipe_steps,
             "date": self.date.isoformat() if self.date else None,
+            "eaten": self.eaten,
+            "completion_time": self.completion_time,
         }
 
 

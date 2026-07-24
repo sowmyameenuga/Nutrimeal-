@@ -3,7 +3,6 @@ import '../services/meal_service.dart';
 import '../services/progress_service.dart';
 
 class FoodDetailsScreen extends StatefulWidget {
-
   final int mealId;
   final String title;
   final String calories;
@@ -14,6 +13,9 @@ class FoodDetailsScreen extends StatefulWidget {
   final String? healthBenefits;
   final String? recipeSteps;
   final String? mealType;
+  final bool eaten;
+  final String? completionTime;
+  final String? date;
 
   const FoodDetailsScreen({
     super.key,
@@ -27,6 +29,9 @@ class FoodDetailsScreen extends StatefulWidget {
     this.healthBenefits,
     this.recipeSteps,
     this.mealType,
+    this.eaten = false,
+    this.completionTime,
+    this.date,
   });
 
   @override
@@ -38,6 +43,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   String healthBenefits = "Loading...";
   String recipeSteps = "";
   bool _isLoading = true;
+  bool _eaten = false;
+  String? _completionTime;
 
   /// Fix common broken UTF-8 encoded characters (e.g. â€¢ → •)
   String _fixEncoding(String text) {
@@ -59,6 +66,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _eaten = widget.eaten;
+    _completionTime = widget.completionTime;
     _loadDetails();
   }
 
@@ -88,168 +97,143 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         _isLoading = false;
       });
     } else {
-      setState(() {
-        ingredients = "Could not load ingredients";
-        healthBenefits = "Could not load benefits";
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+    final cleanIngredients = _fixEncoding(ingredients);
+    final cleanBenefits = _fixEncoding(healthBenefits);
+    final cleanSteps = _fixEncoding(recipeSteps);
 
+    return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
-
-        title: const Text(
-          "Food Details",
-          style: TextStyle(color: Colors.black),
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
-
-
-
-            Text(
-              widget.title,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            // Title & Calories
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Text(
+                  widget.calories,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              widget.calories,
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.green,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-
-                children: [
-
-                  nutrition("Protein", widget.protein),
-                  nutrition("Carbs", widget.carbs),
-                  nutrition("Fat", widget.fat),
-                ],
-              ),
+            // Macros Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                nutrition("Protein", widget.protein),
+                nutrition("Carbs", widget.carbs),
+                nutrition("Fat", widget.fat),
+              ],
             ),
+            const SizedBox(height: 30),
 
-            const SizedBox(height: 25),
-
+            // Ingredients
             const Text(
               "Ingredients",
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 10),
+            Text(
+              cleanIngredients,
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
+            const SizedBox(height: 30),
 
-            _isLoading
-                ? const CircularProgressIndicator()
-                : Text(
-                    _fixEncoding(ingredients),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-
-            const SizedBox(height: 25),
-
+            // Health Benefits
             const Text(
               "Health Benefits",
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 10),
-
-            _isLoading
-                ? const CircularProgressIndicator()
-                : Text(
-                    _fixEncoding(healthBenefits),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-
+            Text(
+              cleanBenefits,
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
             const SizedBox(height: 30),
 
+            // Recipe Steps
+            if (cleanSteps.isNotEmpty) ...[
+              const Text(
+                "Recipe",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                cleanSteps,
+                style: const TextStyle(fontSize: 16, height: 1.5),
+              ),
+              const SizedBox(height: 30),
+            ],
+
+            // Action Buttons
             SizedBox(
               width: double.infinity,
               height: 55,
-
               child: ElevatedButton(
                 onPressed: () {
-                  // Show recipe in a bottom sheet
-                  if (recipeSteps.isNotEmpty) {
-                    showModalBottomSheet(
+                  if (widget.recipeSteps != null && widget.recipeSteps!.isNotEmpty) {
+                    showDialog(
                       context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(20),
+                      builder: (context) => AlertDialog(
+                        title: const Text("Recipe Instructions"),
+                        content: SingleChildScrollView(
+                          child: Text(cleanSteps),
                         ),
-                      ),
-                      builder: (context) => Container(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Recipe: ${widget.title}",
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              recipeSteps,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                height: 1.6,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Close"),
+                          ),
+                        ],
                       ),
                     );
                   } else {
@@ -260,11 +244,9 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                     );
                   }
                 },
-
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                 ),
-
                 child: const Text(
                   "View Recipe",
                   style: TextStyle(
@@ -274,23 +256,44 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 15),
 
             SizedBox(
               width: double.infinity,
               height: 55,
-              child: ElevatedButton.icon(
+              child: _eaten
+                  ? ElevatedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.check_circle, color: Colors.white),
+                label: Text(
+                  "Eaten at $_completionTime",
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade700,
+                  disabledBackgroundColor: Colors.green.shade700,
+                ),
+              )
+                  : ElevatedButton.icon(
                 onPressed: () async {
                   try {
                     final int kcal = int.parse(widget.calories.replaceAll(RegExp(r'[^0-9]'), ''));
                     final double pGrams = double.tryParse(widget.protein.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
                     
+                    // Format current local time without package dependency
+                    final now = DateTime.now();
+                    final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+                    final minute = now.minute.toString().padLeft(2, '0');
+                    final period = now.hour >= 12 ? 'PM' : 'AM';
+                    final timeStr = '$hour:$minute $period';
+
                     final response = await ProgressService.logMeal(
                       kcal,
                       protein: pGrams,
                       title: widget.title,
                       mealId: widget.mealId,
+                      date: widget.date,
+                      completionTime: timeStr,
                     );
 
                     if (context.mounted) {
@@ -320,14 +323,24 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                             title: widget.title,
                             mealId: widget.mealId,
                             confirmDuplicate: true,
+                            date: widget.date,
+                            completionTime: timeStr,
                           );
                           if (context.mounted && (retryResponse['statusCode'] == 200 || retryResponse.containsKey('message'))) {
+                            setState(() {
+                              _eaten = true;
+                              _completionTime = timeStr;
+                            });
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text("Meal logged successfully!"), backgroundColor: Colors.green),
                             );
                           }
                         }
                       } else if (response['statusCode'] == 200 || response.containsKey('message')) {
+                        setState(() {
+                          _eaten = true;
+                          _completionTime = timeStr;
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Meal logged successfully!"), backgroundColor: Colors.green),
                         );
@@ -355,7 +368,6 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 15),
 
             SizedBox(
@@ -407,7 +419,6 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   Widget nutrition(String label, String value) {
     return Column(
       children: [
-
         Text(
           value,
           style: const TextStyle(
@@ -415,10 +426,14 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-
         const SizedBox(height: 5),
-
-        Text(label),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+          ),
+        ),
       ],
     );
   }

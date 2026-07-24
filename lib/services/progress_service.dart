@@ -27,6 +27,8 @@ class ProgressService {
     String title = "Unknown Meal",
     int? mealId,
     bool confirmDuplicate = false,
+    String? date,
+    String? completionTime,
   }) async {
     return await ApiService.post(
       '/progress/log_meal',
@@ -36,6 +38,8 @@ class ProgressService {
         'title': title,
         'meal_id': mealId,
         'confirm_duplicate': confirmDuplicate,
+        'date': date,
+        'completion_time': completionTime,
       },
     );
   }

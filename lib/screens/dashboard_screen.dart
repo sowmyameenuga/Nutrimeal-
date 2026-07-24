@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../services/dashboard_service.dart';
 import '../services/meal_service.dart';
-import '../services/api_service.dart';
+import 'food_details_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,6 +15,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String userName = "User";
   int totalCalories = 0;
   double totalProtein = 0;
+  double totalCarbs = 0;
+  double totalFat = 0;
   double totalWater = 0;
   String breakfastTitle = "Loading...";
   String lunchTitle = "Loading...";
@@ -22,6 +25,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
   int _waterGlasses = 0;
   final int _waterGoal = 8;
+
+  Map<String, dynamic>? breakfastMeal;
+  Map<String, dynamic>? lunchMeal;
+  Map<String, dynamic>? dinnerMeal;
+  Map<String, dynamic>? snackMeal;
+
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -32,7 +42,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadDashboard() async {
     setState(() => _isLoading = true);
 
-    final response = await DashboardService.getDashboardData();
+    final dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
+    final response = await DashboardService.getDashboardData(dateStr);
 
     if (!mounted) return;
 
@@ -51,6 +62,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       userName = response['user_name'] ?? "User";
       totalCalories = summary['calories'] ?? 0;
       totalProtein = (summary['protein'] ?? 0).toDouble();
+      totalCarbs = (summary['carbs'] ?? 0).toDouble();
+      totalFat = (summary['fat'] ?? 0).toDouble();
       totalWater = (summary['water'] ?? 0).toDouble();
       _waterGlasses = summary['water_glasses'] ?? 0;
 
@@ -59,31 +72,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final dinners = meals['dinner'] as List? ?? [];
       final snacks = meals['snack'] as List? ?? [];
 
-      breakfastTitle = breakfasts.isNotEmpty
-          ? breakfasts[0]['title'] ?? "Breakfast"
-          : "No breakfast planned";
-      lunchTitle = lunches.isNotEmpty
-          ? lunches[0]['title'] ?? "Lunch"
-          : "No lunch planned";
-      dinnerTitle = dinners.isNotEmpty
-          ? dinners[0]['title'] ?? "Dinner"
-          : "No dinner planned";
-      snackTitle = snacks.isNotEmpty
-          ? snacks[0]['title'] ?? "Snack"
-          : "No snack planned";
+      breakfastMeal = breakfasts.isNotEmpty ? breakfasts[0] as Map<String, dynamic> : null;
+      lunchMeal = lunches.isNotEmpty ? lunches[0] as Map<String, dynamic> : null;
+      dinnerMeal = dinners.isNotEmpty ? dinners[0] as Map<String, dynamic> : null;
+      snackMeal = snacks.isNotEmpty ? snacks[0] as Map<String, dynamic> : null;
+
+      breakfastTitle = breakfastMeal != null ? breakfastMeal!['title'] : "No breakfast planned";
+      lunchTitle = lunchMeal != null ? lunchMeal!['title'] : "No lunch planned";
+      dinnerTitle = dinnerMeal != null ? dinnerMeal!['title'] : "No dinner planned";
+      snackTitle = snackMeal != null ? snackMeal!['title'] : "No snack planned";
     });
   }
 
   Future<void> _logWater(int glasses) async {
     final litres = glasses * 0.5; // 1 glass = 500ml
+    final dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
     await ApiService.post(
       '/progress/log',
-      body: {'water_litres': litres},
+      body: {
+        'water_litres': litres,
+        'date': dateStr,
+      },
     );
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 
   @override
   Widget build(BuildContext context) {
+    final dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
 
@@ -101,6 +122,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ? const Text("NutriMeal", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
             : null,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month, color: Colors.green),
+            tooltip: "Select Date",
+            onPressed: () async {
+              final selected = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (selected != null) {
+                setState(() {
+                  _selectedDate = selected;
+                });
+                _loadDashboard();
+              }
+            },
+          ),
           if (MediaQuery.of(context).size.width > 800) ...[
             TextButton.icon(
               onPressed: () => Navigator.pushNamed(context, '/dashboard'),
@@ -108,45 +147,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: const Text("Home"),
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
             ),
-            const SizedBox(width: 8),
             TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/recommendation').then((_) => _loadDashboard()),
+              onPressed: () => Navigator.pushNamed(context, '/recommendation'),
               icon: const Icon(Icons.restaurant, size: 18),
               label: const Text("Meals"),
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
             ),
-            const SizedBox(width: 8),
             TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/progress').then((_) => _loadDashboard()),
+              onPressed: () => Navigator.pushNamed(context, '/progress'),
               icon: const Icon(Icons.bar_chart, size: 18),
               label: const Text("Progress"),
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
             ),
-            const SizedBox(width: 8),
             TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/insights').then((_) => _loadDashboard()),
+              onPressed: () => Navigator.pushNamed(context, '/insights'),
               icon: const Icon(Icons.insights, size: 18),
               label: const Text("Insights"),
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
             ),
-            const SizedBox(width: 8),
             TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/profile').then((_) => _loadDashboard()),
+              onPressed: () => Navigator.pushNamed(context, '/profile'),
               icon: const Icon(Icons.person, size: 18),
               label: const Text("Profile"),
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
             ),
-            const SizedBox(width: 16),
           ],
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-            icon: const Icon(
-              Icons.notifications_none,
-              color: Colors.black,
-            ),
-          ),
           const SizedBox(width: 10),
         ],
       ),
@@ -175,12 +200,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 5),
 
-                    const Text(
-                      "Track your nutrition journey today",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          _isToday(_selectedDate)
+                              ? "Today's Plan"
+                              : "Plan for ${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (!_isToday(_selectedDate)) ...[
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedDate = DateTime.now();
+                              });
+                              _loadDashboard();
+                            },
+                            child: const Text(
+                              "Go to Today",
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
 
                     const SizedBox(height: 25),
@@ -237,10 +288,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                           const SizedBox(height: 25),
 
-                          Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceAround,
-
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            alignment: WrapAlignment.spaceEvenly,
                             children: [
 
                               SummaryCircle(
@@ -253,6 +304,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 icon: Icons.fitness_center,
                                 value: "${totalProtein.toStringAsFixed(0)}g",
                                 label: "Protein",
+                              ),
+
+                              SummaryCircle(
+                                icon: Icons.grain,
+                                value: "${totalCarbs.toStringAsFixed(0)}g",
+                                label: "Carbs",
+                              ),
+
+                              SummaryCircle(
+                                icon: Icons.pie_chart,
+                                value: "${totalFat.toStringAsFixed(0)}g",
+                                label: "Fat",
                               ),
 
                               SummaryCircle(
@@ -278,78 +341,96 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.25),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
                       ),
+
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+
                         children: [
-                          Row(
+
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                             children: [
-                              const Icon(Icons.water_drop, color: Colors.white, size: 28),
-                              const SizedBox(width: 10),
-                              const Text(
-                                "Water Reminder",
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                              const Spacer(),
+
                               Text(
-                                "$_waterGlasses / $_waterGoal",
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                "Water Reminder",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              Icon(
+                                Icons.water_drop,
+                                color: Colors.white,
+                                size: 28,
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(_waterGoal, (index) {
-                              final filled = index < _waterGlasses;
-                              return GestureDetector(
-                                onTap: () {
-                                  final newGlasses = index + 1;
-                                  setState(() {
-                                    _waterGlasses = newGlasses;
-                                    totalWater = newGlasses * 0.5;
-                                  });
-                                  _logWater(newGlasses);
-                                },
-                                child: Icon(
-                                  filled ? Icons.local_drink : Icons.local_drink_outlined,
-                                  color: filled ? Colors.white : Colors.white38,
-                                  size: 30,
-                                ),
-                              );
-                            }),
-                          ),
-                          const SizedBox(height: 14),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: _waterGlasses / _waterGoal,
-                              backgroundColor: Colors.white24,
-                              color: Colors.white,
-                              minHeight: 8,
+
+                          const SizedBox(height: 10),
+
+                          Text(
+                            "Logged: ${totalWater.toStringAsFixed(1)}L / 4.0L",
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _waterGlasses >= _waterGoal
-                                ? "🎉 Great job! You've reached your daily water goal!"
-                                : "💧 Drink ${_waterGoal - _waterGlasses} more glasses to reach your goal",
-                            style: const TextStyle(color: Colors.white70, fontSize: 13),
+
+                          const SizedBox(height: 20),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                            children: [
+
+                              Row(
+                                children: List.generate(8, (index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 4.0),
+                                    child: Icon(
+                                      Icons.local_drink,
+                                      color: index < _waterGlasses
+                                          ? Colors.white
+                                          : Colors.white30,
+                                      size: 24,
+                                    ),
+                                  );
+                                }),
+                              ),
+
+                              ElevatedButton(
+                                onPressed: () async {
+                                  if (_waterGlasses < _waterGoal) {
+                                    setState(() {
+                                      _waterGlasses++;
+                                      totalWater = _waterGlasses * 0.5; // 1 glass = 500ml
+                                    });
+                                    await _logWater(_waterGlasses);
+                                    _loadDashboard();
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.blue.shade700,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text("Drink"),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
 
-                    // TODAY MEALS
+                    // TODAY'S MEAL PLAN
                     const Text(
                       "Today's Meal Plan",
                       style: TextStyle(
@@ -358,20 +439,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
 
                     // BREAKFAST
                     MealCard(
                       title: "Breakfast",
                       subtitle: breakfastTitle,
                       icon: Icons.breakfast_dining,
-
+                      status: breakfastMeal != null
+                          ? (breakfastMeal!['eaten'] == true
+                              ? "Eaten at ${breakfastMeal!['completion_time']}"
+                              : "Pending")
+                          : null,
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/recommendation',
-                          arguments: {'meal_type': 'Breakfast'},
-                        ).then((_) => _loadDashboard());
+                        if (breakfastMeal != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FoodDetailsScreen(
+                                mealId: breakfastMeal!['id'],
+                                mealType: 'breakfast',
+                                title: breakfastMeal!['title'],
+                                calories: "${breakfastMeal!['calories']} kcal",
+                                protein: "${breakfastMeal!['protein']}g",
+                                carbs: "${breakfastMeal!['carbs']}g",
+                                fat: "${breakfastMeal!['fat']}g",
+                                ingredients: breakfastMeal!['ingredients'],
+                                healthBenefits: breakfastMeal!['health_benefits'],
+                                recipeSteps: breakfastMeal!['recipe_steps'],
+                                eaten: breakfastMeal!['eaten'] ?? false,
+                                completionTime: breakfastMeal!['completion_time'],
+                                date: dateStr,
+                              ),
+                            ),
+                          ).then((_) => _loadDashboard());
+                        } else {
+                          Navigator.pushNamed(
+                            context,
+                            '/recommendation',
+                            arguments: {'meal_type': 'breakfast'},
+                          ).then((_) => _loadDashboard());
+                        }
                       },
                     ),
 
@@ -380,13 +488,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Lunch",
                       subtitle: lunchTitle,
                       icon: Icons.lunch_dining,
-
+                      status: lunchMeal != null
+                          ? (lunchMeal!['eaten'] == true
+                              ? "Eaten at ${lunchMeal!['completion_time']}"
+                              : "Pending")
+                          : null,
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/recommendation',
-                          arguments: {'meal_type': 'Lunch'},
-                        ).then((_) => _loadDashboard());
+                        if (lunchMeal != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FoodDetailsScreen(
+                                mealId: lunchMeal!['id'],
+                                mealType: 'lunch',
+                                title: lunchMeal!['title'],
+                                calories: "${lunchMeal!['calories']} kcal",
+                                protein: "${lunchMeal!['protein']}g",
+                                carbs: "${lunchMeal!['carbs']}g",
+                                fat: "${lunchMeal!['fat']}g",
+                                ingredients: lunchMeal!['ingredients'],
+                                healthBenefits: lunchMeal!['health_benefits'],
+                                recipeSteps: lunchMeal!['recipe_steps'],
+                                eaten: lunchMeal!['eaten'] ?? false,
+                                completionTime: lunchMeal!['completion_time'],
+                                date: dateStr,
+                              ),
+                            ),
+                          ).then((_) => _loadDashboard());
+                        } else {
+                          Navigator.pushNamed(
+                            context,
+                            '/recommendation',
+                            arguments: {'meal_type': 'lunch'},
+                          ).then((_) => _loadDashboard());
+                        }
                       },
                     ),
 
@@ -395,13 +530,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Dinner",
                       subtitle: dinnerTitle,
                       icon: Icons.dinner_dining,
-
+                      status: dinnerMeal != null
+                          ? (dinnerMeal!['eaten'] == true
+                              ? "Eaten at ${dinnerMeal!['completion_time']}"
+                              : "Pending")
+                          : null,
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/recommendation',
-                          arguments: {'meal_type': 'Dinner'},
-                        ).then((_) => _loadDashboard());
+                        if (dinnerMeal != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FoodDetailsScreen(
+                                mealId: dinnerMeal!['id'],
+                                mealType: 'dinner',
+                                title: dinnerMeal!['title'],
+                                calories: "${dinnerMeal!['calories']} kcal",
+                                protein: "${dinnerMeal!['protein']}g",
+                                carbs: "${dinnerMeal!['carbs']}g",
+                                fat: "${dinnerMeal!['fat']}g",
+                                ingredients: dinnerMeal!['ingredients'],
+                                healthBenefits: dinnerMeal!['health_benefits'],
+                                recipeSteps: dinnerMeal!['recipe_steps'],
+                                eaten: dinnerMeal!['eaten'] ?? false,
+                                completionTime: dinnerMeal!['completion_time'],
+                                date: dateStr,
+                              ),
+                            ),
+                          ).then((_) => _loadDashboard());
+                        } else {
+                          Navigator.pushNamed(
+                            context,
+                            '/recommendation',
+                            arguments: {'meal_type': 'dinner'},
+                          ).then((_) => _loadDashboard());
+                        }
                       },
                     ),
 
@@ -410,13 +572,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Snack",
                       subtitle: snackTitle,
                       icon: Icons.cookie,
-
+                      status: snackMeal != null
+                          ? (snackMeal!['eaten'] == true
+                              ? "Eaten at ${snackMeal!['completion_time']}"
+                              : "Pending")
+                          : null,
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/recommendation',
-                          arguments: {'meal_type': 'Snack'},
-                        ).then((_) => _loadDashboard());
+                        if (snackMeal != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FoodDetailsScreen(
+                                mealId: snackMeal!['id'],
+                                mealType: 'snack',
+                                title: snackMeal!['title'],
+                                calories: "${snackMeal!['calories']} kcal",
+                                protein: "${snackMeal!['protein']}g",
+                                carbs: "${snackMeal!['carbs']}g",
+                                fat: "${snackMeal!['fat']}g",
+                                ingredients: snackMeal!['ingredients'],
+                                healthBenefits: snackMeal!['health_benefits'],
+                                recipeSteps: snackMeal!['recipe_steps'],
+                                eaten: snackMeal!['eaten'] ?? false,
+                                completionTime: snackMeal!['completion_time'],
+                                date: dateStr,
+                              ),
+                            ),
+                          ).then((_) => _loadDashboard());
+                        } else {
+                          Navigator.pushNamed(
+                            context,
+                            '/recommendation',
+                            arguments: {'meal_type': 'snack'},
+                          ).then((_) => _loadDashboard());
+                        }
                       },
                     ),
 
@@ -618,6 +807,7 @@ class MealCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
+  final String? status;
   final VoidCallback onTap;
 
   const MealCard({
@@ -625,8 +815,8 @@ class MealCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.status,
     required this.onTap,
-
   });
 
   @override
@@ -659,7 +849,23 @@ class MealCard extends StatelessWidget {
           ),
         ),
 
-        subtitle: Text(subtitle),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(subtitle),
+            if (status != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                status!,
+                style: TextStyle(
+                  color: status!.contains("Eaten") ? Colors.green : Colors.orange,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ],
+        ),
 
         trailing: const Icon(
           Icons.arrow_forward_ios,
