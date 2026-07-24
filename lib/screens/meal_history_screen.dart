@@ -109,6 +109,22 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
     );
   }
 
+  String _formatFullDate(String dateIso) {
+    try {
+      final date = DateTime.parse(dateIso);
+      final weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      final monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      final weekday = weekdays[date.weekday - 1];
+      final month = monthNames[date.month - 1];
+      return "$weekday, ${date.day} $month ${date.year}";
+    } catch (_) {
+      return dateIso;
+    }
+  }
+
   Widget _buildDayCard(dynamic dayData) {
     final String dateStr = dayData['date'] ?? '';
     final int totalCals = dayData['total_calories'] ?? 0;
@@ -126,9 +142,11 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  dateStr,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    _formatFullDate(dateStr),
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -148,6 +166,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
   }
 
   Widget _buildMealItem(dynamic meal) {
+    final String? compTime = meal['completion_time'];
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -164,6 +183,17 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                     _buildMacro("Cal", "${meal['calories']} kcal", Colors.orange),
                     const SizedBox(width: 8),
                     _buildMacro("P", "${meal['protein']}g", Colors.blue),
+                    if (compTime != null && compTime.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Text(
+                        "Eaten at $compTime",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ],
                 )
               ],

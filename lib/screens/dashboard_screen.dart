@@ -122,24 +122,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ? const Text("NutriMeal", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
             : null,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month, color: Colors.green),
-            tooltip: "Select Date",
-            onPressed: () async {
-              final selected = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate,
-                firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-              );
-              if (selected != null) {
-                setState(() {
-                  _selectedDate = selected;
-                });
-                _loadDashboard();
-              }
-            },
-          ),
           if (MediaQuery.of(context).size.width > 800) ...[
             TextButton.icon(
               onPressed: () => Navigator.pushNamed(context, '/dashboard'),
@@ -200,38 +182,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 5),
 
-                    Row(
-                      children: [
-                        Text(
-                          _isToday(_selectedDate)
-                              ? "Today's Plan"
-                              : "Plan for ${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (!_isToday(_selectedDate)) ...[
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedDate = DateTime.now();
-                              });
-                              _loadDashboard();
-                            },
-                            child: const Text(
-                              "Go to Today",
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    const Text(
+                      "Today's Plan",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
 
                     const SizedBox(height: 25),
