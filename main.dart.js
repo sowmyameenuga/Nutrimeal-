@@ -88487,7 +88487,7 @@ xN(a){return this.adp(a)},
 adp(a){var s=0,r=A.H(t.H)
 var $async$xN=A.I(function(b,c){if(b===1)return A.E(c,r)
 for(;;)switch(s){case 0:s=2
-return A.D(A.fN("/progress/log",!0,A.a2(["water_litres",a*0.25],t.N,t.z)),$async$xN)
+return A.D(A.fN("/progress/log",!0,A.a2(["water_litres",a*0.5],t.N,t.z)),$async$xN)
 case 2:return A.F(null,r)}})
 return A.G($async$xN,r)},
 G(a){var s,r,q,p,o,n,m,l,k=this,j=null,i=t.w,h=A.bh(a,j,i).w.a.a>800?B.RT:B.KD,g=A.bh(a,j,i).w.a.a>800?B.a1F:j,f=t.p,e=A.b([],f)
@@ -88603,7 +88603,7 @@ $S:0}
 A.am1.prototype={
 $0(){var s=this.a,r=this.b
 s.as=r
-s.r=r*0.25},
+s.r=r*0.5},
 $S:0}
 A.amn.prototype={
 $0(){var s=t.N
