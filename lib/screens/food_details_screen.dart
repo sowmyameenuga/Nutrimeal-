@@ -300,7 +300,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
               const SizedBox(height: 30),
             ],
 
-            // Action Buttons
+            // Action Buttons (I Ate This)
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -335,6 +335,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                     final response = await ProgressService.logMeal(
                       kcal,
                       protein: pGrams,
+                      carbs: cGrams,
+                      fat: fGrams,
                       title: widget.title,
                       mealId: widget.mealId,
                       date: widget.date,
@@ -365,6 +367,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                           final retryResponse = await ProgressService.logMeal(
                             kcal,
                             protein: pGrams,
+                            carbs: cGrams,
+                            fat: fGrams,
                             title: widget.title,
                             mealId: widget.mealId,
                             confirmDuplicate: true,

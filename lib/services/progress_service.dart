@@ -24,6 +24,8 @@ class ProgressService {
   /// Add a meal to today's progress. Checks for duplicates.
   static Future<Map<String, dynamic>> logMeal(int calories, {
     double protein = 0,
+    double carbs = 0,
+    double fat = 0,
     String title = "Unknown Meal",
     int? mealId,
     bool confirmDuplicate = false,
@@ -35,6 +37,8 @@ class ProgressService {
       body: {
         'calories': calories,
         'protein': protein,
+        'carbs': carbs,
+        'fat': fat,
         'title': title,
         'meal_id': mealId,
         'confirm_duplicate': confirmDuplicate,
