@@ -13,14 +13,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController ageController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
+  // For feet/inches mode
+  final TextEditingController heightFeetController = TextEditingController();
+  final TextEditingController heightInchesController = TextEditingController();
 
   String selectedGender = "Male";
   String selectedGoal = "Weight Loss";
   String selectedAllergy = "None";
   String selectedDiet = "Veg";
 
+  // Unit selection
+  String _heightUnit = "cm"; // "cm" or "ft"
+  String _weightUnit = "kg"; // "kg" or "lb"
+
+  // Validation error messages
+  String? _heightError;
+  String? _weightError;
+
   bool _isLoading = false;
   bool _isSaving = false;
+
+  // Conversion constants
+  static const double _cmPerFoot = 30.48;
+  static const double _cmPerInch = 2.54;
+  static const double _lbPerKg = 2.20462;
+
+  // Validation limits (in base units)
+  static const double _minHeightCm = 50;
+  static const double _maxHeightCm = 250;
+  static const double _minWeightKg = 20;
+  static const double _maxWeightKg = 300;
 
   @override
   void initState() {
@@ -44,35 +66,160 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ageController.text = response['age'].toString();
         }
         if (response['height_cm'] != null) {
-          heightController.text = response['height_cm'].toString();
+          final double cm = (response['height_cm'] as num).toDouble();
+          if (_heightUnit == "cm") {
+            heightController.text = cm.toStringAsFixed(1);
+          } else {
+            _setCmToFeetInches(cm);
+          }
         }
         if (response['weight_kg'] != null) {
-          weightController.text = response['weight_kg'].toString();
+          final double kg = (response['weight_kg'] as num).toDouble();
+          if (_weightUnit == "kg") {
+            weightController.text = kg.toStringAsFixed(1);
+          } else {
+            weightController.text = (kg * _lbPerKg).toStringAsFixed(1);
+          }
         }
 
         selectedGender = response['gender'] ?? selectedGender;
         selectedGoal = response['goal'] ?? selectedGoal;
         selectedAllergy = response['allergy'] ?? selectedAllergy;
-
-        // ⭐ DIET LOAD
         selectedDiet = response['diet'] ?? selectedDiet;
       });
     }
   }
 
+  void _setCmToFeetInches(double cm) {
+    final totalInches = cm / _cmPerInch;
+    final feet = totalInches ~/ 12;
+    final inches = (totalInches % 12).round();
+    heightFeetController.text = feet.toString();
+    heightInchesController.text = inches.toString();
+  }
+
+  /// Convert the current height input to cm regardless of unit
+  double? _getHeightInCm() {
+    if (_heightUnit == "cm") {
+      return double.tryParse(heightController.text.trim());
+    } else {
+      final feet = int.tryParse(heightFeetController.text.trim()) ?? 0;
+      final inches = int.tryParse(heightInchesController.text.trim()) ?? 0;
+      if (feet == 0 && inches == 0) return null;
+      return (feet * _cmPerFoot) + (inches * _cmPerInch);
+    }
+  }
+
+  /// Convert the current weight input to kg regardless of unit
+  double? _getWeightInKg() {
+    final val = double.tryParse(weightController.text.trim());
+    if (val == null) return null;
+    if (_weightUnit == "lb") {
+      return val / _lbPerKg;
+    }
+    return val;
+  }
+
+  /// Validate height and return error string or null
+  String? _validateHeight() {
+    final cm = _getHeightInCm();
+    if (cm == null) return "Please enter your height";
+    if (cm < _minHeightCm || cm > _maxHeightCm) {
+      if (_heightUnit == "cm") {
+        return "Height must be between ${_minHeightCm.toInt()}–${_maxHeightCm.toInt()} cm";
+      } else {
+        return "Height must be between 1'8\" – 8'2\"";
+      }
+    }
+    return null;
+  }
+
+  /// Validate weight and return error string or null
+  String? _validateWeight() {
+    final kg = _getWeightInKg();
+    if (kg == null) return "Please enter your weight";
+    if (kg < _minWeightKg || kg > _maxWeightKg) {
+      if (_weightUnit == "kg") {
+        return "Weight must be between ${_minWeightKg.toInt()}–${_maxWeightKg.toInt()} kg";
+      } else {
+        return "Weight must be between ${(_minWeightKg * _lbPerKg).toInt()}–${(_maxWeightKg * _lbPerKg).toInt()} lb";
+      }
+    }
+    return null;
+  }
+
+  void _onHeightUnitChanged(String newUnit) {
+    if (newUnit == _heightUnit) return;
+
+    if (_heightUnit == "cm" && newUnit == "ft") {
+      // Convert current cm value to ft/in
+      final cm = double.tryParse(heightController.text.trim());
+      if (cm != null) {
+        _setCmToFeetInches(cm);
+      } else {
+        heightFeetController.clear();
+        heightInchesController.clear();
+      }
+    } else if (_heightUnit == "ft" && newUnit == "cm") {
+      // Convert current ft/in to cm
+      final cm = _getHeightInCm();
+      if (cm != null) {
+        heightController.text = cm.toStringAsFixed(1);
+      } else {
+        heightController.clear();
+      }
+    }
+
+    setState(() {
+      _heightUnit = newUnit;
+      _heightError = null;
+    });
+  }
+
+  void _onWeightUnitChanged(String newUnit) {
+    if (newUnit == _weightUnit) return;
+
+    final currentVal = double.tryParse(weightController.text.trim());
+    if (currentVal != null) {
+      if (_weightUnit == "kg" && newUnit == "lb") {
+        weightController.text = (currentVal * _lbPerKg).toStringAsFixed(1);
+      } else if (_weightUnit == "lb" && newUnit == "kg") {
+        weightController.text = (currentVal / _lbPerKg).toStringAsFixed(1);
+      }
+    }
+
+    setState(() {
+      _weightUnit = newUnit;
+      _weightError = null;
+    });
+  }
+
   Future<void> saveProfile() async {
+    // Validate
+    final heightErr = _validateHeight();
+    final weightErr = _validateWeight();
+    setState(() {
+      _heightError = heightErr;
+      _weightError = weightErr;
+    });
+
+    if (heightErr != null || weightErr != null) return;
+
     setState(() => _isSaving = true);
+
+    final heightCm = _getHeightInCm()!;
+    final weightKg = _getWeightInKg()!;
 
     final response = await ProfileService.saveProfile(
       name: nameController.text,
       age: ageController.text,
       gender: selectedGender,
-      heightCm: heightController.text,
-      weightKg: weightController.text,
+      heightCm: heightCm.toStringAsFixed(1),
+      weightKg: weightKg.toStringAsFixed(1),
       goal: selectedGoal,
       allergy: selectedAllergy,
       diet: selectedDiet,
-      country: "Global", // Send default since UI was removed
+      country: "Global",
     );
 
     if (!mounted) return;
@@ -141,10 +288,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 20),
 
-            textField(controller: heightController, hint: "Height (cm)", icon: Icons.height),
+            // HEIGHT with unit selector
+            _buildHeightField(),
             const SizedBox(height: 20),
 
-            textField(controller: weightController, hint: "Weight (kg)", icon: Icons.monitor_weight),
+            // WEIGHT with unit selector
+            _buildWeightField(),
             const SizedBox(height: 20),
 
             const Text("Fitness Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -175,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 20),
 
-            // ⭐ NEW DIET DROPDOWN
+            // ⭐ DIET DROPDOWN
             const Text("Diet Preference (Veg / Non-Veg / Vegan)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
             dropdownBox(
@@ -207,6 +356,142 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Height field with unit toggle (cm or ft/in)
+  Widget _buildHeightField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.height, color: Colors.grey),
+            const SizedBox(width: 8),
+            const Text("Height", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Spacer(),
+            // Unit toggle
+            ToggleButtons(
+              isSelected: [_heightUnit == "cm", _heightUnit == "ft"],
+              onPressed: (index) {
+                _onHeightUnitChanged(index == 0 ? "cm" : "ft");
+              },
+              borderRadius: BorderRadius.circular(10),
+              selectedColor: Colors.white,
+              fillColor: Colors.green,
+              color: Colors.green,
+              constraints: const BoxConstraints(minWidth: 50, minHeight: 36),
+              children: const [
+                Text("cm"),
+                Text("ft/in"),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_heightUnit == "cm")
+          TextField(
+            controller: heightController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: "Height in cm (e.g. 170)",
+              prefixIcon: const Icon(Icons.straighten),
+              suffixText: "cm",
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              filled: true,
+              fillColor: Colors.white,
+              errorText: _heightError,
+            ),
+            onChanged: (_) => setState(() => _heightError = null),
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: heightFeetController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: "Feet",
+                    suffixText: "ft",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  onChanged: (_) => setState(() => _heightError = null),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: heightInchesController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: "Inches",
+                    suffixText: "in",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  onChanged: (_) => setState(() => _heightError = null),
+                ),
+              ),
+            ],
+          ),
+        if (_heightError != null && _heightUnit == "ft")
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 12),
+            child: Text(_heightError!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+          ),
+      ],
+    );
+  }
+
+  /// Weight field with unit toggle (kg or lb)
+  Widget _buildWeightField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.monitor_weight, color: Colors.grey),
+            const SizedBox(width: 8),
+            const Text("Weight", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Spacer(),
+            // Unit toggle
+            ToggleButtons(
+              isSelected: [_weightUnit == "kg", _weightUnit == "lb"],
+              onPressed: (index) {
+                _onWeightUnitChanged(index == 0 ? "kg" : "lb");
+              },
+              borderRadius: BorderRadius.circular(10),
+              selectedColor: Colors.white,
+              fillColor: Colors.green,
+              color: Colors.green,
+              constraints: const BoxConstraints(minWidth: 50, minHeight: 36),
+              children: const [
+                Text("kg"),
+                Text("lb"),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: weightController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: _weightUnit == "kg" ? "Weight in kg (e.g. 65)" : "Weight in lb (e.g. 143)",
+            prefixIcon: const Icon(Icons.fitness_center),
+            suffixText: _weightUnit,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+            filled: true,
+            fillColor: Colors.white,
+            errorText: _weightError,
+          ),
+          onChanged: (_) => setState(() => _weightError = null),
+        ),
+      ],
     );
   }
 
