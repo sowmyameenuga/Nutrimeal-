@@ -225,12 +225,11 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
 
-          // Mobile layout — unchanged
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [formFields],
+          // Mobile layout
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: formFields,
             ),
           );
         },

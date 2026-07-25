@@ -220,60 +220,62 @@ class _SignupScreenState extends State<SignupScreen> {
             );
           }
 
-          // Mobile layout — unchanged original
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextField(
-                  controller: name,
-                  decoration: const InputDecoration(labelText: "Name"),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: email,
-                  decoration: const InputDecoration(labelText: "Email"),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: password,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+          // Mobile layout
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: name,
+                    decoration: const InputDecoration(labelText: "Name"),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: email,
+                    decoration: const InputDecoration(labelText: "Email"),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: password,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: "Password",
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : () async {
-                    await signupUser();
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text("Sign Up"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Back to Login"),
-                ),
-              ],
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : () async {
+                      await signupUser();
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text("Sign Up"),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Back to Login"),
+                  ),
+                ],
+              ),
             ),
           );
         },
