@@ -117,7 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: EdgeInsets.all(8.0),
                 child: Icon(Icons.restaurant_menu, color: Colors.green, size: 28),
               )
-            : const Icon(Icons.menu, color: Colors.black),
+            : null,
         title: MediaQuery.of(context).size.width > 800
             ? const Text("NutriMeal", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
             : null,
