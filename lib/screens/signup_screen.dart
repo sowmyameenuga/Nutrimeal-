@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -21,6 +22,15 @@ class _SignupScreenState extends State<SignupScreen> {
         const SnackBar(content: Text("Please fill all fields")),
       );
       return;
+    }
+
+    // Save credentials immediately on signup submission
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_email', email.text.trim());
+      await prefs.setString('saved_password', password.text.trim());
+    } catch (e) {
+      // ignore
     }
 
     setState(() => _isLoading = true);

@@ -50,6 +50,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Save credentials immediately on submission
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_email', emailController.text.trim());
+      await prefs.setString('saved_password', passwordController.text.trim());
+    } catch (e) {
+      // ignore
+    }
+
     setState(() => _isLoading = true);
 
     final response = await AuthService.login(
@@ -61,13 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (response['statusCode'] == 200) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('saved_email', emailController.text.trim());
-        await prefs.setString('saved_password', passwordController.text.trim());
-      } catch (e) {
-        // ignore
-      }
       Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
