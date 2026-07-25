@@ -430,6 +430,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                     final response = await MealService.replaceMeal(
                       widget.mealType ?? 'snack',
                       widget.date ?? DateTime.now().toIso8601String().split('T')[0],
+                      oldTitle: widget.title,
                     );
                     if (response['statusCode'] == 200) {
                       if (context.mounted) {
