@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,6 +14,32 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedEmail = prefs.getString('saved_email') ?? '';
+      final savedPassword = prefs.getString('saved_password') ?? '';
+      if (savedEmail.isNotEmpty) {
+        setState(() {
+          emailController.text = savedEmail;
+        });
+      }
+      if (savedPassword.isNotEmpty) {
+        setState(() {
+          passwordController.text = savedPassword;
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
 
   Future<void> loginUser() async {
     if (emailController.text.trim().isEmpty ||
@@ -34,6 +61,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (response['statusCode'] == 200) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_email', emailController.text.trim());
+        await prefs.setString('saved_password', passwordController.text.trim());
+      } catch (e) {
+        // ignore
+      }
       Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
