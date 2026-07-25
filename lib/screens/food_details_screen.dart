@@ -170,24 +170,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Meal Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: Image.network(
-                _getMealImageUrl(widget.mealType),
-                height: 220,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 220,
-                    color: Colors.green.shade50,
-                    child: const Icon(Icons.restaurant, size: 50, color: Colors.green),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // Title & Calories
             Row(
