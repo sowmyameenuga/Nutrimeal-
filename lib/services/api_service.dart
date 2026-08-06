@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,9 +10,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   // Android emulator → 10.0.2.2, iOS simulator → localhost, web → localhost
   static String get baseUrl {
-    if (kIsWeb) return 'https://nutrimeal-backend-qjqa.onrender.com/api';
-    if (Platform.isAndroid) return 'https://nutrimeal-backend-qjqa.onrender.com/api';
-    return 'https://nutrimeal-backend-qjqa.onrender.com/api';
+    if (kDebugMode) {
+      if (kIsWeb) return 'http://127.0.0.1:5000/api';
+      if (Platform.isAndroid) return 'http://10.0.2.2:5000/api';
+      return 'http://127.0.0.1:5000/api';
+    } else {
+      return 'https://nutrimeal-backend-qjqa.onrender.com/api';
+    }
   }
 
   /// Retrieve stored JWT token.
