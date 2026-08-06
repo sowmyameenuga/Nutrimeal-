@@ -14,7 +14,7 @@ permissions:
 jobs:
   android-e2e:
     name: Build APK + Run Appium Tests (API 29 · Nexus 6)
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     timeout-minutes: 90
 
     steps:
