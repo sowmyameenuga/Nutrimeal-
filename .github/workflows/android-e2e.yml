@@ -72,7 +72,7 @@ jobs:
 
       # ── 8. Make CI script executable ─────────────────────────────────────────
       - name: Make CI script executable
-        run: chmod +x ${{ github.workspace }}/NutrimealAppium/scripts/ci_run_tests.sh
+        run: chmod +x $GITHUB_WORKSPACE/NutrimealAppium/scripts/ci_run_tests.sh
 
       # ── 9. Boot emulator + run Appium tests ───────────────────────────────────
       - name: Run Appium Tests on Android Emulator (API 29 · Nexus 6)
