@@ -14,7 +14,7 @@ permissions:
 jobs:
   android-e2e:
     name: Build APK + Run Appium Tests (API 29 · Nexus 6)
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     defaults:
       run:
@@ -66,9 +66,12 @@ jobs:
           npm install -g appium@latest
           appium driver install uiautomator2
 
-      # ── 7. Enable KVM hardware acceleration (macOS natively uses Hypervisor framework) ──
-      - name: Skip KVM (macOS natively accelerated)
-        run: echo "macOS runner provides native hardware acceleration for Android Emulators."
+      # ── 7. Enable KVM hardware acceleration ──
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       # ── 8. Make CI script executable ─────────────────────────────────────────
       - name: Make CI script executable
