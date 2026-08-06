@@ -16,6 +16,9 @@ jobs:
     name: Build APK + Run Appium Tests (API 29 · Nexus 6)
     runs-on: windows-latest
     timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
 
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────────
