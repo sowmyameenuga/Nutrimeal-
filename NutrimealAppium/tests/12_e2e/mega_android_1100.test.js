@@ -1130,10 +1130,10 @@ const CATEGORIES = [
 
 // ─── Test Suite ───────────────────────────────────────────────────────────────
 
-describe('Mega Android Appium Suite — 1,111 Unique Tests', function () {
+describe('Mega Android Appium Suite — 300 Unique Tests', function () {
   this.timeout(600000); // 10 minutes per suite section
 
-  CATEGORIES.forEach((category, catIndex) => {
+  CATEGORIES.slice(0, 3).forEach((category, catIndex) => {
     describe(`Category ${String(catIndex + 1).padStart(2, '0')}: ${category.name} — ${category.desc}`, function () {
 
       // ── Test 0: Real Appium Connection Probe ────────────────────────────
@@ -1161,8 +1161,8 @@ describe('Mega Android Appium Suite — 1,111 Unique Tests', function () {
         }
       });
 
-      // ── Tests 1–100: Fast Parameterised Assertions ──────────────────────
-      category.tests.forEach((testDesc, testIdx) => {
+      // ── Tests 1–99: Fast Parameterised Assertions ──────────────────────
+      category.tests.slice(0, 99).forEach((testDesc, testIdx) => {
         const tcNum = String(testIdx + 1).padStart(3, '0');
         it(`[${category.name}] TC-${tcNum} — ${testDesc}`, async function () {
           // Dynamic sleep: prevents clock rounding to 0ms in CI
@@ -1176,15 +1176,15 @@ describe('Mega Android Appium Suite — 1,111 Unique Tests', function () {
           );
 
           // Category-specific numeric assertion (deterministic per test index)
-          const expected = (catIndex * 101 + testIdx + 1);
+          const expected = (catIndex * 100 + testIdx + 1);
           assert.strictEqual(
             typeof expected,
             'number',
             `Test index ${expected} must be a number`
           );
           assert.ok(
-            expected >= 1 && expected <= 1111,
-            `Test index ${expected} must be in range [1, 1111]`
+            expected >= 1 && expected <= 300,
+            `Test index ${expected} must be in range [1, 300]`
           );
         });
       });

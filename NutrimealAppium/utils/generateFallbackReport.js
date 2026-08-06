@@ -151,7 +151,7 @@ function writeFallbackHtml() {
     <p>The Appium / WebDriverIO test runner encountered a fatal error before any tests could execute.</p>
     <p>This is an automatically generated fallback report.</p>
     <div class="error-box">${escapeHtml(errorMessage)}</div>
-    <p><strong>Tests Executed:</strong> 0 / 1,111</p>
+    <p><strong>Tests Executed:</strong> 0 / 300</p>
     <p><strong>Pass Rate:</strong> 0.00%</p>
     <div class="meta">Generated at ${runTime} by NutrimealAppium generateFallbackReport.js</div>
   </div>
