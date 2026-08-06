@@ -95,25 +95,27 @@ jobs:
           path: ${{ github.workspace }}/NutrimealAppium/Test_Results/
           retention-days: 30
 
-      # ── 11. Deploy HTML report to gh-pages (latest) ───────────────────────────
+      # ── 11. Deploy HTML report to gh-pages (latest) ──────────────────────────
       - name: Deploy HTML Report to gh-pages (latest)
         if: always()
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          folder: ${{ github.workspace }}/NutrimealAppium/Test_Results/HTML
-          target-folder: reports/latest
-          branch: gh-pages
-          clean: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ github.workspace }}/NutrimealAppium/Test_Results/HTML
+          destination_dir: reports/latest
+          publish_branch: gh-pages
+          keep_files: true
 
       # ── 12. Deploy HTML report to gh-pages (history) ─────────────────────────
       - name: Deploy HTML Report to gh-pages (history)
         if: always()
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          folder: ${{ github.workspace }}/NutrimealAppium/Test_Results/HTML
-          target-folder: reports/history/build-${{ github.run_number }}
-          branch: gh-pages
-          clean: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ github.workspace }}/NutrimealAppium/Test_Results/HTML
+          destination_dir: reports/history/build-${{ github.run_number }}
+          publish_branch: gh-pages
+          keep_files: true
 
       # ── 13. GHA Step Summary ──────────────────────────────────────────────────
       - name: Write GHA Step Summary
