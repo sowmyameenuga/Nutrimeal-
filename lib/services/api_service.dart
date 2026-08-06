@@ -12,8 +12,8 @@ class ApiService {
   static String get baseUrl {
     if (kDebugMode) {
       if (kIsWeb) return 'http://127.0.0.1:5000/api';
-      if (Platform.isAndroid) return 'http://10.0.2.2:5000/api';
-      return 'http://127.0.0.1:5000/api';
+      // Connect mobile devices directly to the live Render API to support physical devices
+      return 'https://nutrimeal-backend-qjqa.onrender.com/api';
     } else {
       return 'https://nutrimeal-backend-qjqa.onrender.com/api';
     }
