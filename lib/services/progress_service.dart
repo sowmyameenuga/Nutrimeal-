@@ -12,15 +12,11 @@ class ProgressService {
     int? caloriesConsumed,
     double? waterLitres,
     double? currentWeight,
-    int? caloriesBurned,
-    String? exercisesJson,
   }) async {
     final body = <String, dynamic>{};
     if (caloriesConsumed != null) body['calories_consumed'] = caloriesConsumed;
     if (waterLitres != null) body['water_litres'] = waterLitres;
     if (currentWeight != null) body['current_weight'] = currentWeight;
-    if (caloriesBurned != null) body['calories_burned'] = caloriesBurned;
-    if (exercisesJson != null) body['exercises_json'] = exercisesJson;
 
     return await ApiService.post('/progress/log', body: body);
   }

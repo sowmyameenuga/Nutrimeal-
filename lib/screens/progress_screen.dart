@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/progress_model.dart';
 import '../services/progress_service.dart';
@@ -18,7 +17,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
   double weeklyProtein = 0.0;
   double weeklyCarbs = 0.0;
   double weeklyFat = 0.0;
-  List<dynamic> loggedExercises = [];
 
   @override
   void initState() {
@@ -36,11 +34,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     if (dailyResponse['statusCode'] == 200) {
       dailyProgress = ProgressModel.fromJson(dailyResponse);
-      try {
-        loggedExercises = jsonDecode(dailyProgress!.exercisesJson) as List;
-      } catch (_) {
-        loggedExercises = [];
-      }
     }
 
     if (weeklyResponse['statusCode'] == 200) {
@@ -115,13 +108,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
             progressCard(
               title: "Today's Calories",
               value: dp != null
-                  ? "${dp.caloriesConsumed - dp.caloriesBurned} / ${dp.calorieTarget} kcal"
+                  ? "${dp.caloriesConsumed} / ${dp.calorieTarget} kcal"
                   : "0 / 2000 kcal",
               progress: dp?.calorieProgress.clamp(0.0, 1.0) ?? 0.0,
               icon: Icons.local_fire_department,
               subtitle: dp != null
-                  ? "Consumed: ${dp.caloriesConsumed} kcal | Burned: ${dp.caloriesBurned} kcal\n${(dp.calorieTarget - (dp.caloriesConsumed - dp.caloriesBurned)).clamp(0, 99999)} kcal remaining"
-                  : "Consumed: 0 kcal | Burned: 0 kcal | 2000 kcal remaining",
+                  ? "${(dp.calorieTarget - dp.caloriesConsumed).clamp(0, 99999)} kcal remaining"
+                  : "2000 kcal remaining",
             ),
 
             const SizedBox(height: 20),
@@ -154,7 +147,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
             const SizedBox(height: 30),
 
-            // BUTTONS ROW 1
+            // BUTTONS ROW
             Row(
               children: [
                 Expanded(
@@ -176,26 +169,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   child: SizedBox(
                     height: 50,
                     child: ElevatedButton.icon(
-                      onPressed: () => _showExerciseDialog(context),
-                      icon: const Icon(Icons.fitness_center),
-                      label: const Text("Log Exercise"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // BUTTONS ROW 2
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pushNamed(
                           context,
@@ -211,27 +184,26 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/meal_history',
-                        ).then((_) => _loadProgress());
-                      },
-                      icon: const Icon(Icons.history),
-                      label: const Text("Meal History"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueGrey,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
               ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/meal_history',
+                  ).then((_) => _loadProgress());
+                },
+                icon: const Icon(Icons.history),
+                label: const Text("View Meal History"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  foregroundColor: Colors.white,
+                ),
+              ),
             ),
 
             const SizedBox(height: 30),
@@ -330,41 +302,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ...weeklyActivity.reversed.map(
                 (a) => weeklyTile(a.dayName, "${a.caloriesConsumed} kcal"),
               ),
-
-            const SizedBox(height: 30),
-
-            // TODAY'S EXERCISES
-            const Text(
-              "Today's Exercises",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            if (loggedExercises.isEmpty)
-              const Card(
-                elevation: 0,
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(15)),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Center(
-                    child: Text(
-                      "No exercises logged today.",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                ),
-              )
-            else
-              ...loggedExercises.map(
-                (e) => exerciseTile(
-                  e['name'] ?? 'Exercise',
-                  e['duration'] != null ? "${e['duration']} mins" : "",
-                  "${e['calories'] ?? 0} kcal",
-                  e['time'] ?? "",
-                ),
-              ),
             const SizedBox(height: 20),
           ],
         ),
@@ -431,105 +368,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
             child: const Text("Save"),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showExerciseDialog(BuildContext context) {
-    String selectedExercise = "Running 🏃‍♂️";
-    final caloriesCtrl = TextEditingController();
-    final durationCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setStateDialog) => AlertDialog(
-          title: const Text("Log Exercise"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                initialValue: selectedExercise,
-                decoration: const InputDecoration(labelText: "Select Exercise"),
-                items:
-                    [
-                      "Running 🏃‍♂️",
-                      "Walking 🚶‍♂️",
-                      "Cycling 🚴‍♂️",
-                      "Strength Training 🏋️‍♂️",
-                      "Yoga 🧘‍♂️",
-                      "Other ⚡",
-                    ].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setStateDialog(() {
-                      selectedExercise = val;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: durationCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Duration (minutes)",
-                  hintText: "30",
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: caloriesCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Calories Burned (kcal)",
-                  hintText: "300",
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final duration = int.tryParse(durationCtrl.text) ?? 0;
-                final burned = int.tryParse(caloriesCtrl.text) ?? 0;
-                final now = DateTime.now();
-                final timeString =
-                    "${now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour)}:${now.minute.toString().padLeft(2, '0')} ${now.hour >= 12 ? 'PM' : 'AM'}";
-
-                final newExercise = {
-                  "name": selectedExercise,
-                  "duration": duration,
-                  "calories": burned,
-                  "time": timeString,
-                };
-
-                final updatedExercises = List<dynamic>.from(loggedExercises)
-                  ..add(newExercise);
-                final currentBurned = dailyProgress?.caloriesBurned ?? 0;
-
-                await ProgressService.logProgress(
-                  caloriesBurned: currentBurned + burned,
-                  exercisesJson: jsonEncode(updatedExercises),
-                );
-
-                if (!context.mounted) return;
-                Navigator.pop(context);
-                _loadProgress(); // Refresh data
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -664,50 +502,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
         trailing: Text(
           calories,
           style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  Widget exerciseTile(
-    String name,
-    String duration,
-    String calories,
-    String time,
-  ) {
-    IconData iconData = Icons.fitness_center;
-    if (name.contains("Run")) {
-      iconData = Icons.directions_run;
-    } else if (name.contains("Walk")) {
-      iconData = Icons.directions_walk;
-    } else if (name.contains("Cycle")) {
-      iconData = Icons.directions_bike;
-    } else if (name.contains("Yoga")) {
-      iconData = Icons.self_improvement;
-    } else if (name.contains("Strength")) {
-      iconData = Icons.fitness_center;
-    }
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.orange.shade50,
-          child: Icon(iconData, color: Colors.orange),
-        ),
-        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(
-          "$duration${duration.isNotEmpty && time.isNotEmpty ? ' | ' : ''}Logged at $time",
-          style: TextStyle(color: Colors.grey.shade600),
-        ),
-        trailing: Text(
-          "+ $calories",
-          style: const TextStyle(
-            color: Colors.orange,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
         ),
       ),
     );

@@ -7,8 +7,6 @@ class ProgressModel {
   final double currentWeight;
   final double weightGoal;
   final double startingWeight;
-  final int caloriesBurned;
-  final String exercisesJson;
 
   ProgressModel({
     required this.date,
@@ -19,8 +17,6 @@ class ProgressModel {
     required this.currentWeight,
     required this.weightGoal,
     required this.startingWeight,
-    required this.caloriesBurned,
-    required this.exercisesJson,
   });
 
   factory ProgressModel.fromJson(Map<String, dynamic> json) {
@@ -36,14 +32,11 @@ class ProgressModel {
       currentWeight: currentVal,
       weightGoal: goalVal,
       startingWeight: startVal,
-      caloriesBurned: json['calories_burned'] ?? 0,
-      exercisesJson: json['exercises_json'] ?? '[]',
     );
   }
 
   double get calorieProgress => calorieTarget > 0
-      ? (caloriesConsumed - caloriesBurned).clamp(0, calorieTarget) /
-            calorieTarget
+      ? caloriesConsumed.clamp(0, calorieTarget) / calorieTarget
       : 0;
 
   double get waterProgress => waterTarget > 0 ? waterLitres / waterTarget : 0;
