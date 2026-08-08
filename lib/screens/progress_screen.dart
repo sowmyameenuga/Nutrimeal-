@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/progress_model.dart';
 import '../services/progress_service.dart';
+import '../services/exercise_service.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -18,6 +19,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
   double weeklyCarbs = 0.0;
   double weeklyFat = 0.0;
 
+  // Exercise states
+  int todayBurnedCalories = 0;
+  List<dynamic> todayExercises = [];
+  List<dynamic> weeklyExercises = [];
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +35,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     final dailyResponse = await ProgressService.getDailyProgress();
     final weeklyResponse = await ProgressService.getWeeklyActivity();
+    final todayExerciseRes = await ExerciseService.getTodayExercises();
+    final weeklyExerciseRes = await ExerciseService.getWeeklyExercises();
 
     if (!mounted) return;
 
@@ -55,7 +63,37 @@ class _ProgressScreenState extends State<ProgressScreen> {
       }
     }
 
+    if (todayExerciseRes['statusCode'] == 200) {
+      todayBurnedCalories = (todayExerciseRes['total_calories_burned'] ?? 0)
+          .toInt();
+      todayExercises = todayExerciseRes['exercises'] ?? [];
+    }
+
+    if (weeklyExerciseRes['statusCode'] == 200) {
+      weeklyExercises = weeklyExerciseRes['data'] ?? [];
+    }
+
     setState(() => _isLoading = false);
+  }
+
+  int _calculateEstimatedCalories(
+    String exercise,
+    int duration,
+    String intensity,
+    double weight,
+  ) {
+    final Map<String, Map<String, double>> metMap = {
+      "Running": {"Low": 6.0, "Moderate": 8.3, "High": 11.8},
+      "Walking": {"Low": 2.5, "Moderate": 3.5, "High": 4.5},
+      "Cycling": {"Low": 4.0, "Moderate": 6.8, "High": 10.0},
+      "Swimming": {"Low": 4.5, "Moderate": 6.0, "High": 8.0},
+      "Weight Lifting": {"Low": 3.0, "Moderate": 5.0, "High": 6.0},
+      "Jump Rope (Skipping)": {"Low": 7.0, "Moderate": 10.0, "High": 12.0},
+    };
+    if (!metMap.containsKey(exercise)) return 0;
+    final met = metMap[exercise]![intensity] ?? 5.0;
+    final durationHours = duration / 60.0;
+    return (met * weight * durationHours).round();
   }
 
   @override
@@ -81,6 +119,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
 
     final dp = dailyProgress;
+    final netCalories = dp != null
+        ? dp.caloriesConsumed - todayBurnedCalories
+        : 0;
+    final calorieProgress = dp != null && dp.calorieTarget > 0
+        ? netCalories.clamp(0, dp.calorieTarget) / dp.calorieTarget
+        : 0.0;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -104,16 +148,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // DAILY CALORIES
+            // DAILY CALORIES (WITH EXERCISE NET CALORIES INCLUDED)
             progressCard(
               title: "Today's Calories",
               value: dp != null
-                  ? "${dp.caloriesConsumed} / ${dp.calorieTarget} kcal"
+                  ? "$netCalories / ${dp.calorieTarget} kcal (Net)"
                   : "0 / 2000 kcal",
-              progress: dp?.calorieProgress.clamp(0.0, 1.0) ?? 0.0,
+              progress: calorieProgress,
               icon: Icons.local_fire_department,
               subtitle: dp != null
-                  ? "${(dp.calorieTarget - dp.caloriesConsumed).clamp(0, 99999)} kcal remaining"
+                  ? "Consumed: ${dp.caloriesConsumed} kcal | Burned: $todayBurnedCalories kcal\n${(dp.calorieTarget - netCalories).clamp(0, 99999)} kcal remaining"
                   : "2000 kcal remaining",
             ),
 
@@ -147,7 +191,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
             const SizedBox(height: 30),
 
-            // BUTTONS ROW
+            // BUTTONS GRID (2x2)
             Row(
               children: [
                 Expanded(
@@ -169,6 +213,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   child: SizedBox(
                     height: 50,
                     child: ElevatedButton.icon(
+                      onPressed: () => _showLogExerciseDialog(context),
+                      icon: const Icon(Icons.fitness_center),
+                      label: const Text("Log Exercise"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade800,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pushNamed(
                           context,
@@ -184,25 +247,148 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/meal_history',
+                        ).then((_) => _loadProgress());
+                      },
+                      icon: const Icon(Icons.history),
+                      label: const Text("Meal History"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueGrey,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/meal_history',
-                  ).then((_) => _loadProgress());
-                },
-                icon: const Icon(Icons.history),
-                label: const Text("View Meal History"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueGrey,
-                  foregroundColor: Colors.white,
-                ),
+
+            const SizedBox(height: 30),
+
+            // TODAY'S EXERCISE SUMMARY CARD
+            const Text(
+              "Today's Exercises",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (todayExercises.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          "No exercises logged today.",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    )
+                  else ...[
+                    ...todayExercises.map((exercise) {
+                      final name = exercise['exercise_name'] ?? '';
+                      final duration = exercise['duration_minutes'] ?? 0;
+                      final intensity = exercise['intensity'] ?? 'Moderate';
+                      final burned = exercise['calories_burned'] ?? 0;
+
+                      IconData icon = Icons.fitness_center;
+                      Color iconColor = Colors.orange;
+
+                      if (name.contains("Running")) {
+                        icon = Icons.directions_run;
+                        iconColor = Colors.blue;
+                      } else if (name.contains("Walking")) {
+                        icon = Icons.directions_walk;
+                        iconColor = Colors.green;
+                      } else if (name.contains("Cycling")) {
+                        icon = Icons.directions_bike;
+                        iconColor = Colors.purple;
+                      } else if (name.contains("Swimming")) {
+                        icon = Icons.pool;
+                        iconColor = Colors.teal;
+                      } else if (name.contains("Weight Lifting")) {
+                        icon = Icons.fitness_center;
+                        iconColor = Colors.red;
+                      } else if (name.contains("Jump Rope")) {
+                        icon = Icons.bolt;
+                        iconColor = Colors.amber;
+                      }
+
+                      return Card(
+                        elevation: 0,
+                        color: Colors.grey.shade50,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          side: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: iconColor.withOpacity(0.1),
+                            child: Icon(icon, color: iconColor),
+                          ),
+                          title: Text(
+                            name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            "$duration mins · $intensity intensity",
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
+                          trailing: Text(
+                            "-$burned kcal",
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Total Burned:",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            "$todayBurnedCalories kcal",
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
 
@@ -222,6 +408,24 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: _buildBarChart(),
+            ),
+
+            const SizedBox(height: 30),
+
+            // WEEKLY CALORIES BURNED (BAR CHART)
+            const Text(
+              "Weekly Calories Burned",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              height: 220,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: _buildWeeklyExerciseChart(),
             ),
 
             const SizedBox(height: 30),
@@ -305,6 +509,220 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showLogExerciseDialog(BuildContext context) {
+    String selectedExercise = "Running";
+    String selectedIntensity = "Moderate";
+    final durationCtrl = TextEditingController();
+    int estimatedCalories = 0;
+
+    final userWeight = dailyProgress?.currentWeight ?? 70.0;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            void updatePreview() {
+              final mins = int.tryParse(durationCtrl.text) ?? 0;
+              if (mins > 0) {
+                setDialogState(() {
+                  estimatedCalories = _calculateEstimatedCalories(
+                    selectedExercise,
+                    mins,
+                    selectedIntensity,
+                    userWeight,
+                  );
+                });
+              } else {
+                setDialogState(() {
+                  estimatedCalories = 0;
+                });
+              }
+            }
+
+            return AlertDialog(
+              title: const Text("Log Exercise"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Exercise Type",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    DropdownButton<String>(
+                      value: selectedExercise,
+                      isExpanded: true,
+                      items:
+                          [
+                                "Running",
+                                "Walking",
+                                "Cycling",
+                                "Swimming",
+                                "Weight Lifting",
+                                "Jump Rope (Skipping)",
+                              ]
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() => selectedExercise = val);
+                          updatePreview();
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    const Text(
+                      "Duration (minutes)",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextField(
+                      controller: durationCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(hintText: "e.g. 30"),
+                      onChanged: (_) => updatePreview(),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text(
+                      "Intensity",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Row(
+                      children: ["Low", "Moderate", "High"].map((intensity) {
+                        return Expanded(
+                          child: Row(
+                            children: [
+                              Radio<String>(
+                                value: intensity,
+                                groupValue: selectedIntensity,
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setDialogState(
+                                      () => selectedIntensity = val,
+                                    );
+                                    updatePreview();
+                                  }
+                                },
+                              ),
+                              Expanded(
+                                child: Text(
+                                  intensity,
+                                  style: const TextStyle(fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Estimated Calorie Burn",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "$estimatedCalories kcal",
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            "Based on weight: ${userWeight.toStringAsFixed(1)} kg",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final mins = int.tryParse(durationCtrl.text) ?? 0;
+                    if (mins <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please enter a duration greater than 0 minutes.",
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    if (userWeight <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please set your weight in your profile before logging an exercise.",
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    final res = await ExerciseService.logExercise(
+                      exerciseName: selectedExercise,
+                      durationMinutes: mins,
+                      intensity: selectedIntensity,
+                    );
+
+                    if (!context.mounted) return;
+
+                    if (res['statusCode'] == 200) {
+                      Navigator.pop(context);
+                      _loadProgress(); // Refresh stats
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            res['error'] ?? "Failed to log exercise.",
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text("Save"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -448,6 +866,72 @@ class _ProgressScreenState extends State<ProgressScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.deepPurple.shade300, Colors.deepPurple],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              data["day"],
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildWeeklyExerciseChart() {
+    final hasData = weeklyExercises.isNotEmpty;
+    final List<Map<String, dynamic>> chartData = hasData
+        ? weeklyExercises.map((a) {
+            final day = (a['day_name'] ?? 'Sun') as String;
+            final cals = (a['calories_burned'] ?? 0) as int;
+            return {"day": day.substring(0, 3), "cals": cals};
+          }).toList()
+        : [
+            {"day": "Sun", "cals": 0},
+            {"day": "Mon", "cals": 0},
+            {"day": "Tue", "cals": 0},
+            {"day": "Wed", "cals": 0},
+            {"day": "Thu", "cals": 0},
+            {"day": "Fri", "cals": 0},
+            {"day": "Sat", "cals": 0},
+          ];
+
+    int maxCals = chartData.fold(
+      0,
+      (max, item) => item["cals"] > max ? item["cals"] : max,
+    );
+    if (maxCals == 0) maxCals = 500;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: chartData.map((data) {
+        final double heightPercentage = (data["cals"] / maxCals)
+            .clamp(0.0, 1.0)
+            .toDouble();
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              "${data["cals"]}",
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: 30,
+              height: (140 * heightPercentage).toDouble(),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.orange.shade300, Colors.orange.shade700],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),

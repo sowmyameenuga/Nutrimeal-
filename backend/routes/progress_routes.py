@@ -46,9 +46,6 @@ def get_daily_progress():
         "water_target": water_target,
         "current_weight": log.current_weight if log else (profile.weight_kg if profile else 0),
         "weight_goal": weight_goal,
-        "starting_weight": profile.weight_kg if profile else 0,
-        "calories_burned": log.calories_burned if log else 0,
-        "exercises_json": log.exercises_json if log else "[]",
     }
 
     return jsonify(result), 200
@@ -76,10 +73,6 @@ def log_progress():
         log.water_litres = float(data["water_litres"])
     if "current_weight" in data:
         log.current_weight = float(data["current_weight"])
-    if "calories_burned" in data:
-        log.calories_burned = int(data["calories_burned"])
-    if "exercises_json" in data:
-        log.exercises_json = str(data["exercises_json"])
 
     db.session.commit()
 
@@ -203,34 +196,9 @@ def get_weekly_activity():
             "calories_consumed": log.calories_consumed if log else 0,
             "water_litres": log.water_litres if log else 0.0,
             "current_weight": log.current_weight if log else 0,
-            "calories_burned": log.calories_burned if log else 0,
         })
 
-    # Calculate weekly nutrition totals from logged meals
-    weekly_meals = (
-        LoggedMeal.query
-        .filter(
-            LoggedMeal.user_id == user_id,
-            LoggedMeal.date >= week_start,
-            LoggedMeal.date <= today
-        )
-        .all()
-    )
-
-    weekly_calories = sum((m.calories if m.calories is not None else 0) for m in weekly_meals)
-    weekly_protein = sum((m.protein if m.protein is not None else 0.0) for m in weekly_meals)
-    weekly_carbs = sum((m.carbs if m.carbs is not None else 0.0) for m in weekly_meals)
-    weekly_fat = sum((m.fat if m.fat is not None else 0.0) for m in weekly_meals)
-
-    return jsonify({
-        "data": week_data,
-        "weekly_nutrition": {
-            "calories": weekly_calories,
-            "protein": weekly_protein,
-            "carbs": weekly_carbs,
-            "fat": weekly_fat
-        }
-    }), 200
+    return jsonify(week_data), 200
 
 @progress_bp.route("/history", methods=["GET"])
 @jwt_required()
