@@ -226,70 +226,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
             const SizedBox(height: 30),
 
-            // WEEKLY NUTRITION SUMMARY
-            const Text(
-              "Weekly Nutrition",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final itemWidth = (constraints.maxWidth - 16) / 2;
-                  return Column(
-                    children: [
-                      Row(
-                        children: [
-                          _buildNutritionItem(
-                            "Calories",
-                            "$weeklyCalories kcal",
-                            Icons.local_fire_department,
-                            Colors.orange,
-                            itemWidth,
-                          ),
-                          const SizedBox(width: 16),
-                          _buildNutritionItem(
-                            "Protein",
-                            "${weeklyProtein.toStringAsFixed(1)} g",
-                            Icons.egg,
-                            Colors.red,
-                            itemWidth,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _buildNutritionItem(
-                            "Carbs",
-                            "${weeklyCarbs.toStringAsFixed(1)} g",
-                            Icons.rice_bowl,
-                            Colors.amber,
-                            itemWidth,
-                          ),
-                          const SizedBox(width: 16),
-                          _buildNutritionItem(
-                            "Fat",
-                            "${weeklyFat.toStringAsFixed(1)} g",
-                            Icons.opacity,
-                            Colors.blue,
-                            itemWidth,
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
             // DAILY BREAKDOWN LIST
             const Text(
               "Daily Breakdown",
@@ -386,53 +322,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     } else {
       return "Weight maintained";
     }
-  }
-
-  Widget _buildNutritionItem(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-    double width,
-  ) {
-    return SizedBox(
-      width: width,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   // PROGRESS CARD
