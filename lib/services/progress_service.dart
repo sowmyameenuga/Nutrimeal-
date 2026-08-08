@@ -12,17 +12,22 @@ class ProgressService {
     int? caloriesConsumed,
     double? waterLitres,
     double? currentWeight,
+    int? caloriesBurned,
+    String? exercisesJson,
   }) async {
     final body = <String, dynamic>{};
     if (caloriesConsumed != null) body['calories_consumed'] = caloriesConsumed;
     if (waterLitres != null) body['water_litres'] = waterLitres;
     if (currentWeight != null) body['current_weight'] = currentWeight;
+    if (caloriesBurned != null) body['calories_burned'] = caloriesBurned;
+    if (exercisesJson != null) body['exercises_json'] = exercisesJson;
 
     return await ApiService.post('/progress/log', body: body);
   }
 
   /// Add a meal to today's progress. Checks for duplicates.
-  static Future<Map<String, dynamic>> logMeal(int calories, {
+  static Future<Map<String, dynamic>> logMeal(
+    int calories, {
     double protein = 0,
     double carbs = 0,
     double fat = 0,
@@ -68,7 +73,8 @@ class ProgressService {
   }
 
   /// Update a logged meal's details.
-  static Future<Map<String, dynamic>> updateLoggedMeal(int logId, {
+  static Future<Map<String, dynamic>> updateLoggedMeal(
+    int logId, {
     int? calories,
     double? protein,
     String? title,

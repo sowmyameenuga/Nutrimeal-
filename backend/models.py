@@ -117,6 +117,8 @@ class ProgressLog(db.Model):
     protein_consumed = db.Column(db.Float, default=0)
     water_litres = db.Column(db.Float, default=0)
     current_weight = db.Column(db.Float, default=0)
+    calories_burned = db.Column(db.Integer, default=0)
+    exercises_json = db.Column(db.Text, default="[]")
 
     def to_dict(self):
         return {
@@ -127,6 +129,8 @@ class ProgressLog(db.Model):
             "protein_consumed": self.protein_consumed,
             "water_litres": self.water_litres,
             "current_weight": self.current_weight,
+            "calories_burned": self.calories_burned,
+            "exercises_json": self.exercises_json,
         }
 
 
