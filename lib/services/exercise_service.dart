@@ -19,6 +19,11 @@ class ExerciseService {
     return await ApiService.post('/exercise/log', body: body);
   }
 
+  /// Get personalized exercise recommendation based on user profile.
+  static Future<Map<String, dynamic>> getExerciseRecommendation() async {
+    return await ApiService.get('/exercise/recommend');
+  }
+
   /// Get exercise logs for today.
   static Future<Map<String, dynamic>> getTodayExercises() async {
     return await ApiService.get('/exercise/today');

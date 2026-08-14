@@ -54,6 +54,11 @@ class ProgressService {
     return await ApiService.get('/progress/weekly');
   }
 
+  /// Get last 7 days of detailed weekly summary (nutrition + exercise).
+  static Future<Map<String, dynamic>> getWeeklySummary() async {
+    return await ApiService.get('/progress/weekly_summary');
+  }
+
   /// Get all logged meals grouped by date.
   static Future<List<dynamic>> getMealHistory() async {
     final response = await ApiService.get('/progress/history');

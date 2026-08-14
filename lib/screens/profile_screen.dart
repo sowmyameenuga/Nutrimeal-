@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String selectedGoal = "Weight Loss";
   String selectedAllergy = "None";
   String selectedDiet = "Veg";
+  String selectedActivityLevel = "Moderate";
 
   // Unit selection
   String _heightUnit = "cm"; // "cm" or "ft"
@@ -108,6 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         selectedGoal = response['goal'] ?? selectedGoal;
         selectedAllergy = response['allergy'] ?? selectedAllergy;
         selectedDiet = response['diet'] ?? selectedDiet;
+        selectedActivityLevel = response['activity_level'] ?? selectedActivityLevel;
       });
     }
     _validateFieldsRealtime();
@@ -300,6 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       allergy: selectedAllergy,
       diet: selectedDiet,
       country: "Global",
+      activityLevel: selectedActivityLevel,
     );
 
     if (!mounted) return;
@@ -445,6 +448,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.restaurant,
               items: ["Veg", "Non-Veg", "Vegan"],
               onChanged: (value) => setState(() => selectedDiet = value!),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text("Activity Level", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            dropdownBox(
+              value: selectedActivityLevel,
+              icon: Icons.directions_run,
+              items: ["Sedentary", "Light", "Moderate", "Active"],
+              onChanged: (value) => setState(() => selectedActivityLevel = value!),
             ),
 
 

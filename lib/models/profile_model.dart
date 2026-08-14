@@ -7,6 +7,7 @@ class ProfileModel {
   final double? weightKg;
   final String? goal;
   final String? allergy;
+  final String? activityLevel;
 
   ProfileModel({
     this.userId,
@@ -17,6 +18,7 @@ class ProfileModel {
     this.weightKg,
     this.goal,
     this.allergy,
+    this.activityLevel,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class ProfileModel {
           : null,
       goal: json['goal'],
       allergy: json['allergy'],
+      activityLevel: json['activity_level'] ?? "Moderate",
     );
   }
 }

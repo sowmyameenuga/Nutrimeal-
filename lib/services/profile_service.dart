@@ -18,6 +18,7 @@ class ProfileService {
     required String allergy,
     required String diet,
     required String country,
+    required String activityLevel,
   }) async {
     return await ApiService.post(
       '/profile',
@@ -31,6 +32,7 @@ class ProfileService {
         'allergy': allergy,
         'diet': diet, 
         'country': country,
+        'activity_level': activityLevel,
       },
     );
   }
