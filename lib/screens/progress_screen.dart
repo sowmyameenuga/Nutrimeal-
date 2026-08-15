@@ -36,6 +36,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
   final TextEditingController chosenDurationCtrl = TextEditingController(text: "30");
   String chosenIntensity = "Moderate";
 
+  // Weekly summary states
+  List<dynamic> weeklySummary = [];
+  int? expandedDayIndex;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +54,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final todayExerciseRes = await ExerciseService.getTodayExercises();
     final weeklyExerciseRes = await ExerciseService.getWeeklyExercises();
     final recommendRes = await ExerciseService.getExerciseRecommendation();
+    final weeklySummaryRes = await ProgressService.getWeeklySummary();
 
     if (!mounted) return;
 
@@ -95,6 +100,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
     } else {
       _recommendError = recommendRes['error'] ?? "Failed to load recommendation. Please update your profile with weight/age first.";
       recommendedExercise = "";
+    }
+
+    if (weeklySummaryRes['statusCode'] == 200) {
+      weeklySummary = weeklySummaryRes['data'] ?? [];
     }
 
     setState(() => _isLoading = false);
@@ -804,18 +813,161 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
             const SizedBox(height: 30),
 
-            // DAILY BREAKDOWN LIST
+            // DAILY SUMMARY LIST
             const Text(
-              "Daily Breakdown",
+              "Daily Summary",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            if (weeklyActivity.isEmpty)
-              const Text("No weekly activity logged yet.")
+            if (weeklySummary.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    "No activity summary available yet.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
             else
-              ...weeklyActivity.reversed.map(
-                (a) => weeklyTile(a.dayName, "${a.caloriesConsumed} kcal"),
-              ),
+              ...weeklySummary.reversed.toList().asMap().entries.map((entry) {
+                final int index = entry.key;
+                final dayData = entry.value;
+
+                final String dayName = dayData['day_name'] ?? '';
+                
+                final nutrition = dayData['nutrition'] ?? {};
+                final int consumed = (nutrition['calories'] ?? 0).toInt();
+                final double protein = (nutrition['protein'] ?? 0.0).toDouble();
+                final double carbs = (nutrition['carbs'] ?? 0.0).toDouble();
+                final double fat = (nutrition['fat'] ?? 0.0).toDouble();
+
+                final exercise = dayData['exercise'] ?? {};
+                final int burned = (exercise['burned'] ?? 0).toInt();
+                final List exercisesList = exercise['exercises'] ?? [];
+
+                final summary = dayData['summary'] ?? {};
+                final int net = (summary['net'] ?? 0).toInt();
+
+                final bool isExpanded = expandedDayIndex == index;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 0,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        expandedDayIndex = isExpanded ? null : index;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                dayName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              Icon(
+                                isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                color: Colors.grey,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Consumed: $consumed kcal | Burned: $burned kcal | Net: $net kcal",
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (isExpanded) ...[
+                            const SizedBox(height: 12),
+                            const Divider(),
+                            const SizedBox(height: 12),
+                            
+                            // NUTRITION SECTION
+                            const Text(
+                              "Nutrition",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text("• Calories: $consumed kcal", style: const TextStyle(fontSize: 14)),
+                            Text("• Protein: ${protein.toStringAsFixed(1)} g", style: const TextStyle(fontSize: 14)),
+                            Text("• Carbs: ${carbs.toStringAsFixed(1)} g", style: const TextStyle(fontSize: 14)),
+                            Text("• Fat: ${fat.toStringAsFixed(1)} g", style: const TextStyle(fontSize: 14)),
+                            
+                            const SizedBox(height: 16),
+                            
+                            // EXERCISE SECTION
+                            const Text(
+                              "Exercise",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            if (exercisesList.isEmpty)
+                              const Text("• No exercises logged", style: TextStyle(fontSize: 14, color: Colors.grey))
+                            else
+                              ...exercisesList.map((e) {
+                                final String name = e['exercise_name'] ?? '';
+                                final int duration = (e['duration_minutes'] ?? 0).toInt();
+                                final String intensity = e['intensity'] ?? 'Moderate';
+                                final int eBurned = (e['calories_burned'] ?? 0).toInt();
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6.0),
+                                  child: Text("• $name — $duration min — $intensity\n  Calories burned: $eBurned kcal", style: const TextStyle(fontSize: 14)),
+                                );
+                              }),
+                              
+                            const SizedBox(height: 16),
+                            
+                            // SUMMARY SECTION
+                            const Text(
+                              "Summary",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text("• Consumed: $consumed kcal", style: const TextStyle(fontSize: 14)),
+                            Text("• Burned: $burned kcal", style: const TextStyle(fontSize: 14)),
+                            Text(
+                              "• Net: $net kcal",
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.green),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             const SizedBox(height: 20),
           ],
         ),
