@@ -11,53 +11,60 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _mealReminders = true;
   bool _waterReminders = true;
   bool _dailyQuotes = false;
-  bool _marketingEmails = false;
+  bool _soundAndVibrate = true;
+  bool _progressAlerts = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.green.shade50,
       appBar: AppBar(
-        title: const Text("Notifications"),
+        title: const Text("App Notifications"),
         backgroundColor: Colors.green,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            "Push Notifications",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            "In-App & Push Notifications",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
           _buildSwitch(
             "Meal Reminders",
-            "Get notified when it's time for your planned meals.",
+            "Get notified on screen when it's time for your planned breakfast, lunch, or dinner.",
             _mealReminders,
             (val) => setState(() => _mealReminders = val),
           ),
           _buildSwitch(
-            "Water Hydration",
-            "Reminders to drink water throughout the day.",
+            "Water Hydration Alerts",
+            "Hourly screen alerts to drink water and log your target glasses.",
             _waterReminders,
             (val) => setState(() => _waterReminders = val),
           ),
           _buildSwitch(
             "Daily Health Quotes",
-            "Receive an inspiring health quote every morning.",
+            "Receive an inspiring wellness notification every morning inside the app.",
             _dailyQuotes,
             (val) => setState(() => _dailyQuotes = val),
           ),
-          const SizedBox(height: 30),
-          const Text(
-            "Email Preferences",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
           _buildSwitch(
-            "Marketing & Offers",
-            "Receive emails about new features and offers.",
-            _marketingEmails,
-            (val) => setState(() => _marketingEmails = val),
+            "Progress & Achievement Alerts",
+            "Receive alerts inside the app when you hit your daily macro or hydration targets.",
+            _progressAlerts,
+            (val) => setState(() => _progressAlerts = val),
+          ),
+          const SizedBox(height: 25),
+          const Text(
+            "Alert Styles",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
+          ),
+          const SizedBox(height: 15),
+          _buildSwitch(
+            "Sound & Haptic Vibration",
+            "Play alert sound and vibrate on receiving in-app notification banners.",
+            _soundAndVibrate,
+            (val) => setState(() => _soundAndVibrate = val),
           ),
         ],
       ),
