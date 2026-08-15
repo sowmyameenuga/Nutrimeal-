@@ -92,6 +92,113 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     }
   }
 
+  String _estimateCookingTime(String title) {
+    final name = title.toLowerCase();
+    if (name.contains("smoothie") || name.contains("shake") || name.contains("salad") || name.contains("fruit") || name.contains("avocado toast") || name.contains("sandwich") || name.contains("wrap")) {
+      return "5–10 minutes";
+    }
+    if (name.contains("egg") || name.contains("omelet") || name.contains("scramble") || name.contains("pancake") || name.contains("upma") || name.contains("oatmeal") || name.contains("oats") || name.contains("toast") || name.contains("chai") || name.contains("tea")) {
+      return "10–15 minutes";
+    }
+    if (name.contains("fried rice") || name.contains("rice") || name.contains("pasta") || name.contains("quinoa") || name.contains("tofu") || name.contains("paneer") || name.contains("dosa") || name.contains("idli")) {
+      return "15–20 minutes";
+    }
+    if (name.contains("biryani") || name.contains("curry") || name.contains("chicken") || name.contains("stew") || name.contains("soup")) {
+      return "30–40 minutes";
+    }
+    return "15–25 minutes";
+  }
+
+  String _estimateServingSize(String title) {
+    final name = title.toLowerCase();
+    if (name.contains("smoothie") || name.contains("shake") || name.contains("juice") || name.contains("chai") || name.contains("tea")) {
+      return "1 tall glass";
+    }
+    if (name.contains("salad") || name.contains("soup") || name.contains("oats") || name.contains("oatmeal") || name.contains("porridge")) {
+      return "1 bowl";
+    }
+    if (name.contains("wrap") || name.contains("sandwich") || name.contains("roll")) {
+      return "1 wrap / sandwich";
+    }
+    if (name.contains("toast")) {
+      return "2 slices";
+    }
+    if (name.contains("idli") || name.contains("dosa")) {
+      return "1 plate (2-3 pieces)";
+    }
+    return "1 plate (serving size for 1 person)";
+  }
+
+  String _generateFallbackRecipeSteps(String title) {
+    final name = title.toLowerCase();
+    if (name.contains("fried rice") || name.contains("rice bowl")) {
+      return "1. Heat oil in a pan over medium heat.\n2. Add ginger-garlic paste and sauté briefly.\n3. Add mixed vegetables and stir-fry until slightly tender.\n4. Add cooked rice and mix well.\n5. Add soy sauce and salt.\n6. Stir-fry for 2-3 minutes.\n7. Garnish with spring onions and serve hot.";
+    }
+    if (name.contains("idli")) {
+      return "1. Grease the idli plates lightly with cooking oil.\n2. Pour fermented idli batter into each mold.\n3. Steam in a closed steamer or pressure cooker for 10-12 minutes.\n4. Let it cool for 2 minutes, then unmold using a wet spoon.\n5. Serve warm with coconut chutney.";
+    }
+    if (name.contains("dosa")) {
+      return "1. Heat a non-stick tawa or griddle and wipe with a damp cloth.\n2. Pour a ladle of dosa batter in the center and spread thinly in circles.\n3. Drizzle oil or ghee around the edges and cook on medium heat.\n4. Once golden and crisp, fold in half or wrap.\n5. Serve hot with chutney and sambar.";
+    }
+    if (name.contains("upma")) {
+      return "1. Dry roast the semolina (rava) until lightly fragrant.\n2. Heat oil in a pan, add mustard seeds, curry leaves, onions, and green chilies.\n3. Pour in water, add salt, and bring to a boil.\n4. Gradually add the roasted rava while stirring continuously to avoid lumps.\n5. Cover and cook on low heat for 3 minutes, then serve warm.";
+    }
+    if (name.contains("biryani")) {
+      return "1. Soak basmati rice for 30 minutes, then boil until 70% cooked.\n2. Saute sliced onions in ghee until caramelized and brown.\n3. Cook vegetables or marinated protein with biryani spices in a pot.\n4. Layer the rice over the cooked base, sprinkle fried onions and mint.\n5. Cover tightly and cook on very low heat (dum) for 15 minutes.";
+    }
+    if (name.contains("oatmeal") || name.contains("oats")) {
+      return "1. In a medium saucepan, combine oats with milk or water.\n2. Bring to a gentle boil over medium heat.\n3. Simmer for 5 minutes, stirring occasionally until thick.\n4. Transfer to a bowl and top with fresh fruits or honey.\n5. Serve warm.";
+    }
+    if (name.contains("sandwich") || name.contains("wrap") || name.contains("toast")) {
+      return "1. Lightly toast the bread slices or warm the wrap tortilla in a pan.\n2. Slice vegetables such as cucumber, tomato, and avocado.\n3. Spread spreads or sauces evenly onto the bread or wrap.\n4. Assemble by layering ingredients, proteins, and greens.\n5. Cut in half and serve immediately.";
+    }
+    if (name.contains("smoothie") || name.contains("shake")) {
+      return "1. Chop ingredients such as fruits or greens into small pieces.\n2. Add them into a high-speed blender.\n3. Pour in milk, juice, or water base.\n4. Blend on high speed for 60 seconds until smooth.\n5. Pour into a glass and serve cold.";
+    }
+    if (name.contains("salad")) {
+      return "1. Wash all salad greens and vegetables thoroughly.\n2. Chop greens, vegetables, and proteins into bite-sized pieces.\n3. Whisk together oil, lemon juice, salt, and pepper in a small bowl.\n4. Drizzle dressing over salad and toss to coat.\n5. Garnish with nuts or cheese and serve fresh.";
+    }
+    if (name.contains("paneer") || name.contains("curry")) {
+      return "1. Heat oil in a pan and saute diced onions, ginger, and garlic.\n2. Stir in spices (turmeric, garam masala, salt) and tomato puree.\n3. Cook until the gravy thickens and releases oil.\n4. Add paneer cubes or main proteins, along with a splash of water.\n5. Simmer for 5 minutes, garnish with fresh coriander, and serve hot.";
+    }
+    return "1. Wash and prep all raw vegetables and ingredients.\n2. Heat oil in a pan and saute aromatics until fragrant.\n3. Add main ingredients and cook on medium heat for 8-10 minutes.\n4. Season with salt, pepper, and herbs.\n5. Transfer to a serving plate and serve warm.";
+  }
+
+  String _generateFallbackIngredients(String title) {
+    final name = title.toLowerCase();
+    if (name.contains("fried rice")) {
+      return "- 1 cup cooked rice\n- 1/2 cup mixed vegetables\n- 1 tbsp oil\n- 1/2 tsp ginger-garlic paste\n- Salt to taste\n- 1 tbsp soy sauce\n- Spring onions";
+    }
+    if (name.contains("idli")) {
+      return "- 2 cups fermented idli batter (rice & urad dal)\n- 1 tsp cooking oil\n- Coconut chutney (for serving)";
+    }
+    if (name.contains("dosa")) {
+      return "- 1.5 cups fermented dosa batter\n- 2 tsp oil or ghee\n- Chutney & sambar";
+    }
+    if (name.contains("upma")) {
+      return "- 1 cup semolina (rava)\n- 1/2 onion, finely chopped\n- 1 green chili\n- 1 tsp mustard seeds & curry leaves\n- 2 cups water\n- 2 tsp oil & salt";
+    }
+    if (name.contains("biryani")) {
+      return "- 1 cup basmati rice\n- 1 cup mixed vegetables or protein\n- 1 onion, sliced\n- 2 tbsp ghee\n- Biryani masala & mint leaves";
+    }
+    if (name.contains("oats") || name.contains("oatmeal")) {
+      return "- 50g rolled oats\n- 200ml milk or water\n- 1 tsp honey or maple syrup\n- Fresh berries or banana slices";
+    }
+    if (name.contains("sandwich") || name.contains("wrap") || name.contains("toast")) {
+      return "- 2 slices of bread or 1 wrap tortilla\n- Sliced tomato & cucumber\n- 1/2 avocado or spreads\n- Salad greens & protein slices";
+    }
+    if (name.contains("smoothie") || name.contains("shake")) {
+      return "- 1 banana or mixed fruits\n- 1 glass milk or plant-based milk\n- 1 tbsp honey or seeds";
+    }
+    if (name.contains("salad")) {
+      return "- 2 cups mixed salad greens\n- 1/2 cucumber, sliced\n- 5 cherry tomatoes\n- 1 tbsp olive oil & lemon juice\n- Salt & pepper";
+    }
+    if (name.contains("paneer") || name.contains("curry")) {
+      return "- 200g paneer or main protein\n- 1 onion & 2 tomatoes, pureed\n- 1 tsp ginger-garlic paste\n- Garam masala, turmeric, & salt\n- 1 tbsp oil & fresh coriander";
+    }
+    return "- Main dish ingredients\n- 1 tsp oil\n- Salt and pepper to taste\n- Selected spices and herbs";
+  }
+
   @override
   void initState() {
     super.initState();
@@ -102,7 +209,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   }
 
   Future<void> _loadDetails() async {
-    // If details were passed directly, use them
+    // If details were passed directly, validate them
     if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {
       if (!mounted) return;
       setState(() {
@@ -120,17 +227,37 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     if (!mounted) return;
 
     if (response['statusCode'] == 200) {
+      final String apiTitle = response['title'] ?? '';
+      
+      // Strict validation: recipe.name === selectedDish.name
+      final normApi = apiTitle.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
+      final normWidget = widget.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
+
       setState(() {
-        ingredients = response['ingredients'] ?? "No ingredients listed";
-        healthBenefits = response['health_benefits'] ?? "No benefits listed";
-        recipeSteps = response['recipe_steps'] ?? "";
+        if (normApi == normWidget && response['ingredients'] != null && response['ingredients'].toString().trim().isNotEmpty) {
+          ingredients = response['ingredients'] ?? "No ingredients listed";
+          healthBenefits = response['health_benefits'] ?? "No benefits listed";
+          recipeSteps = response['recipe_steps'] ?? "";
+        } else {
+          // If mismatch or missing recipe, do NOT show generic. Generate specific dish recipe steps!
+          ingredients = _generateFallbackIngredients(widget.title);
+          recipeSteps = _generateFallbackRecipeSteps(widget.title);
+          healthBenefits = "A nutritious dish tailored to support a healthy body and fit your fitness goals.";
+        }
+        
         if (response.containsKey('recommendation_reason') && response['recommendation_reason'] != null) {
           recommendationReason = response['recommendation_reason'];
         }
         _isLoading = false;
       });
     } else {
-      setState(() => _isLoading = false);
+      setState(() {
+        // If API fails, fall back to safe specific recipe generator for this dish
+        ingredients = _generateFallbackIngredients(widget.title);
+        recipeSteps = _generateFallbackRecipeSteps(widget.title);
+        healthBenefits = "A nutritious dish tailored to support a healthy body and fit your fitness goals.";
+        _isLoading = false;
+      });
     }
   }
 
@@ -208,6 +335,82 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             ),
             const SizedBox(height: 30),
 
+            // Cooking Time & Serving Size Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.timer_outlined, color: Colors.orange),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Cooking Time",
+                              style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              _estimateCookingTime(widget.title),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(width: 1, height: 40, color: Colors.grey.shade300),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.restaurant_menu_outlined, color: Colors.green),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Serving Size",
+                                style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                _estimateServingSize(widget.title),
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            // Short Description
+            const Text(
+              "Short Description",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              cleanBenefits.isNotEmpty ? cleanBenefits : "A delicious and healthy meal choice tailored to your wellness needs.",
+              style: const TextStyle(fontSize: 16, height: 1.5, color: Colors.black87),
+            ),
+            const SizedBox(height: 30),
+
             // AI Recommendation Reason
             const Text(
               "AI Recommendation Reason",
@@ -247,29 +450,14 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             const SizedBox(height: 10),
             Text(
               cleanIngredients,
-              style: const TextStyle(fontSize: 16, height: 1.5),
+              style: const TextStyle(fontSize: 16, height: 1.5, letterSpacing: 0.1),
             ),
             const SizedBox(height: 30),
 
-            // Health Benefits
-            const Text(
-              "Health Benefits",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              cleanBenefits,
-              style: const TextStyle(fontSize: 16, height: 1.5),
-            ),
-            const SizedBox(height: 30),
-
-            // Recipe Steps
+            // Preparation Steps
             if (cleanSteps.isNotEmpty) ...[
               const Text(
-                "Recipe Steps",
+                "Preparation Steps",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -278,7 +466,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
               const SizedBox(height: 10),
               Text(
                 cleanSteps,
-                style: const TextStyle(fontSize: 16, height: 1.5),
+                style: const TextStyle(fontSize: 16, height: 1.6),
               ),
               const SizedBox(height: 30),
             ],
