@@ -447,12 +447,34 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              cleanIngredients,
-              style: const TextStyle(fontSize: 16, height: 1.5, letterSpacing: 0.1),
-            ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 15),
+            ...cleanIngredients.split('\n').where((s) => s.trim().isNotEmpty).map((ing) {
+              String ingText = ing.trim();
+              if (ingText.startsWith('-')) {
+                ingText = ingText.substring(1).trim();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.check_circle_outline, size: 20, color: Colors.green.shade600),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        ingText,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          height: 1.4,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 25),
 
             // Preparation Steps
             if (cleanSteps.isNotEmpty) ...[
@@ -463,12 +485,56 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                cleanSteps,
-                style: const TextStyle(fontSize: 16, height: 1.6),
-              ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 15),
+              ...cleanSteps.split('\n').where((s) => s.trim().isNotEmpty).map((step) {
+                final match = RegExp(r'^(\d+)\.\s*(.*)').firstMatch(step);
+                String numStr = "";
+                String stepText = step;
+                if (match != null) {
+                  numStr = match.group(1)!;
+                  stepText = match.group(2)!;
+                } else {
+                  numStr = "*";
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.green.shade200, width: 1.5),
+                        ),
+                        child: Text(
+                          numStr,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          stepText,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.5,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 20),
             ],
 
             // Action Buttons (I Ate This)
