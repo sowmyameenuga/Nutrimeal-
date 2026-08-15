@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../services/dashboard_service.dart';
 import '../services/meal_service.dart';
@@ -23,8 +24,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String dinnerTitle = "Loading...";
   String snackTitle = "Loading...";
   bool _isLoading = true;
+  
+  // Water Logging Preferences Customization
   int _waterGlasses = 0;
-  final int _waterGoal = 8;
+  double _waterTargetVolume = 4.0;
+  int _glassSizeMl = 500;
+  String _waterUnit = "L";
 
   Map<String, dynamic>? breakfastMeal;
   Map<String, dynamic>? lunchMeal;
@@ -36,7 +41,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDashboard();
+    _loadDashboard().then((_) => _loadWaterPreferences());
+  }
+
+  Future<void> _loadWaterPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _waterTargetVolume = prefs.getDouble('water_target_volume') ?? 4.0;
+      _glassSizeMl = prefs.getInt('water_glass_size_ml') ?? 500;
+      _waterUnit = prefs.getString('water_unit') ?? "L";
+      _waterGlasses = (_glassSizeMl > 0) ? (totalWater * 1000 / _glassSizeMl).round() : 0;
+    });
+  }
+
+  Future<void> _saveWaterPreferences(double target, int size, String unit) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('water_target_volume', target);
+    await prefs.setInt('water_glass_size_ml', size);
+    await prefs.setString('water_unit', unit);
+    await _loadWaterPreferences();
   }
 
   Future<void> _loadDashboard() async {
@@ -65,7 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       totalCarbs = (summary['carbs'] ?? 0).toDouble();
       totalFat = (summary['fat'] ?? 0).toDouble();
       totalWater = (summary['water'] ?? 0).toDouble();
-      _waterGlasses = summary['water_glasses'] ?? 0;
+      _waterGlasses = (_glassSizeMl > 0) ? (totalWater * 1000 / _glassSizeMl).round() : 0;
 
       final breakfasts = meals['breakfast'] as List? ?? [];
       final lunches = meals['lunch'] as List? ?? [];
@@ -85,7 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _logWater(int glasses) async {
-    final litres = glasses * 0.5; // 1 glass = 500ml
+    final litres = glasses * (_glassSizeMl / 1000.0);
     final dateStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
     await ApiService.post(
       '/progress/log',
@@ -99,6 +122,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isToday(DateTime date) {
     final now = DateTime.now();
     return date.year == now.year && date.month == now.month && date.day == now.day;
+  }
+
+  void _showWaterPreferencesDialog() {
+    double tempTarget = _waterTargetVolume;
+    int tempSize = _glassSizeMl;
+    String tempUnit = _waterUnit;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.water_drop, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text("Water Preferences", style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Daily Water Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<double>(
+                    initialValue: tempTarget,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0].map((val) {
+                      return DropdownMenuItem<double>(
+                        value: val,
+                        child: Text("${val.toStringAsFixed(1)} Liters"),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => tempTarget = val);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  const Text("Glass Size", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    initialValue: tempSize,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: const [
+                      DropdownMenuItem<int>(value: 250, child: Text("250 ml (Standard Cup)")),
+                      DropdownMenuItem<int>(value: 330, child: Text("330 ml (Medium Glass)")),
+                      DropdownMenuItem<int>(value: 500, child: Text("500 ml (Large Glass/Bottle)")),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => tempSize = val);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  const Text("Measurement Unit", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: tempUnit,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: const [
+                      DropdownMenuItem<String>(value: "L", child: Text("Liters (L)")),
+                      DropdownMenuItem<String>(value: "ml", child: Text("Milliliters (ml)")),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => tempUnit = val);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    await _saveWaterPreferences(tempTarget, tempSize, tempUnit);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      _loadDashboard();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade600,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text("Save"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -277,7 +411,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                               SummaryCircle(
                                 icon: Icons.water_drop,
-                                value: "${totalWater.toStringAsFixed(1)}L",
+                                value: _waterUnit == "L"
+                                    ? "${totalWater.toStringAsFixed(1)}L"
+                                    : "${(totalWater * 1000).toStringAsFixed(0)}ml",
                                 label: "Water",
                               ),
                             ],
@@ -299,18 +435,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
-
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
-
-                          const Row(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                             children: [
-
-                              Text(
+                              const Text(
                                 "Water Reminder",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -318,53 +449,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-
-                              Icon(
-                                Icons.water_drop,
-                                color: Colors.white,
-                                size: 28,
+                              IconButton(
+                                icon: const Icon(Icons.settings, color: Colors.white, size: 24),
+                                onPressed: _showWaterPreferencesDialog,
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
                               ),
                             ],
                           ),
-
-                          const SizedBox(height: 10),
-
+                          const SizedBox(height: 5),
                           Text(
-                            "Logged: ${totalWater.toStringAsFixed(1)}L / 4.0L",
+                            _waterUnit == "L"
+                                ? "Logged: ${totalWater.toStringAsFixed(1)}L / ${_waterTargetVolume.toStringAsFixed(1)}L"
+                                : "Logged: ${(totalWater * 1000).toStringAsFixed(0)}ml / ${(_waterTargetVolume * 1000).toStringAsFixed(0)}ml",
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 16,
                             ),
                           ),
-
                           const SizedBox(height: 20),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                             children: [
-
-                              Row(
-                                children: List.generate(8, (index) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 4.0),
-                                    child: Icon(
-                                      Icons.local_drink,
-                                      color: index < _waterGlasses
-                                          ? Colors.white
-                                          : Colors.white30,
-                                      size: 24,
-                                    ),
-                                  );
-                                }),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: List.generate((_waterTargetVolume * 1000 / _glassSizeMl).round(), (index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 6.0),
+                                        child: Icon(
+                                          Icons.local_drink,
+                                          color: index < _waterGlasses
+                                              ? Colors.white
+                                              : Colors.white30,
+                                          size: 26,
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ),
                               ),
-
+                              const SizedBox(width: 8),
                               ElevatedButton(
                                 onPressed: () async {
-                                  if (_waterGlasses < _waterGoal) {
+                                  final targetGlasses = (_waterTargetVolume * 1000 / _glassSizeMl).round();
+                                  if (_waterGlasses < targetGlasses) {
                                     setState(() {
                                       _waterGlasses++;
-                                      totalWater = _waterGlasses * 0.5; // 1 glass = 500ml
+                                      totalWater = _waterGlasses * (_glassSizeMl / 1000.0);
                                     });
                                     await _logWater(_waterGlasses);
                                     _loadDashboard();
