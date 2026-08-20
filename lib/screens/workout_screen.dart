@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/progress_model.dart';
 import '../services/progress_service.dart';
 import '../services/exercise_service.dart';
+import '../services/profile_service.dart';
 
 class WorkoutScreen extends StatefulWidget {
   const WorkoutScreen({super.key});
@@ -13,6 +14,7 @@ class WorkoutScreen extends StatefulWidget {
 class _WorkoutScreenState extends State<WorkoutScreen> {
   ProgressModel? dailyProgress;
   bool _isLoading = true;
+  double userWeight = 70.0;
 
   // Recommendation states
   String recommendedExercise = "";
@@ -38,11 +40,24 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
     final dailyResponse = await ProgressService.getDailyProgress();
     final recommendRes = await ExerciseService.getExerciseRecommendation();
+    final profileRes = await ProfileService.getProfile();
 
     if (!mounted) return;
 
     if (dailyResponse['statusCode'] == 200) {
       dailyProgress = ProgressModel.fromJson(dailyResponse);
+    }
+
+    if (profileRes['statusCode'] == 200 && profileRes['profile'] != null) {
+      final p = profileRes['profile'];
+      final w = p['weight_kg'];
+      if (w != null) {
+        userWeight = double.tryParse(w.toString()) ?? 70.0;
+      }
+    }
+
+    if (dailyProgress != null && dailyProgress!.currentWeight > 0) {
+      userWeight = dailyProgress!.currentWeight;
     }
 
     if (recommendRes['statusCode'] == 200) {
@@ -61,13 +76,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   int get customEstimatedCalories {
-    final weight = dailyProgress?.currentWeight ?? 70.0;
     final amount = int.tryParse(chosenDurationCtrl.text) ?? 0;
     return ExerciseService.calculateEstimatedCalories(
       exerciseName: chosenExercise,
       amount: amount,
       intensity: chosenIntensity,
-      weight: weight,
+      weight: userWeight,
     );
   }
 
@@ -379,7 +393,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                             border: Border.all(color: Colors.orange.shade100),
                           ),
                           child: Text(
-                            "Estimated Calorie Burn: $customEstimatedCalories kcal\n(Based on weight: ${(dailyProgress?.currentWeight ?? 70.0).toStringAsFixed(1)} kg)",
+                            "Estimated Calorie Burn: $customEstimatedCalories kcal\n(Based on weight: ${userWeight.toStringAsFixed(1)} kg)",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange.shade900,

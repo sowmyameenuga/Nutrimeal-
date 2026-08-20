@@ -44,7 +44,7 @@ def get_daily_progress():
         "calorie_target": calorie_target,
         "water_litres": log.water_litres if log else 0.0,
         "water_target": water_target,
-        "current_weight": log.current_weight if log else (profile.weight_kg if profile else 0),
+        "current_weight": log.current_weight if log and log.current_weight and log.current_weight > 0 else (profile.weight_kg if profile and profile.weight_kg else 0.0),
         "weight_goal": weight_goal,
     }
 
