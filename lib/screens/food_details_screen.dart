@@ -350,18 +350,22 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                       children: [
                         const Icon(Icons.timer_outlined, color: Colors.orange),
                         const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Cooking Time",
-                              style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              _estimateCookingTime(widget.title),
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Cooking Time",
+                                style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                _estimateCookingTime(widget.title),
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -374,18 +378,22 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                         children: [
                           const Icon(Icons.restaurant_menu_outlined, color: Colors.green),
                           const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Serving Size",
-                                style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                _estimateServingSize(widget.title),
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Serving Size",
+                                  style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  _estimateServingSize(widget.title),
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
