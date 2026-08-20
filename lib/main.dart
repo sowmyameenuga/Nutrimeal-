@@ -15,6 +15,7 @@ import 'screens/notifications_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/meal_history_screen.dart';
 import 'screens/forgot_password_screen.dart';
+import 'screens/workout_screen.dart';
 
 
 void main() {
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         '/notifications': (context) => const NotificationsScreen(),
         '/privacy': (context) => const PrivacyScreen(),
         '/forgot_password': (context) => const ForgotPasswordScreen(),
+        '/workout': (context) => const WorkoutScreen(),
       },
     );
   }

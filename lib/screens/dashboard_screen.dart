@@ -276,6 +276,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextButton.styleFrom(foregroundColor: Colors.black87),
             ),
             TextButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/workout'),
+              icon: const Icon(Icons.fitness_center, size: 18),
+              label: const Text("Workout"),
+              style: TextButton.styleFrom(foregroundColor: Colors.black87),
+            ),
+            TextButton.icon(
               onPressed: () => Navigator.pushNamed(context, '/insights'),
               icon: const Icon(Icons.insights, size: 18),
               label: const Text("Insights"),
@@ -724,7 +730,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
 
-                        const SizedBox(width: 15),
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: actionCard(
+                            context,
+                            "Workout",
+                            Icons.fitness_center,
+                            '/workout',
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
 
                         Expanded(
                           child: actionCard(
