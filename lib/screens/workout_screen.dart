@@ -20,6 +20,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   String recommendedIntensity = "";
   int recommendedCalories = 0;
   String _recommendError = "";
+  bool recommendedIsReps = false;
 
   // Choose your own exercise states
   String chosenExercise = "Walking";
@@ -49,6 +50,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       recommendedDuration = (recommendRes['duration_minutes'] ?? 0).toInt();
       recommendedIntensity = recommendRes['intensity'] ?? "";
       recommendedCalories = (recommendRes['calories_burned'] ?? 0).toInt();
+      recommendedIsReps = recommendRes['is_repetition_based'] ?? false;
       _recommendError = "";
     } else {
       _recommendError = recommendRes['error'] ?? "Failed to load recommendation. Please update your profile with weight/age first.";
@@ -58,38 +60,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     setState(() => _isLoading = false);
   }
 
-  int _calculateEstimatedCalories(
-    String exercise,
-    int duration,
-    String intensity,
-    double weight,
-  ) {
-    final Map<String, Map<String, double>> metMap = {
-      "Running": {"Low": 6.0, "Moderate": 8.3, "High": 11.8},
-      "Walking": {"Low": 2.5, "Moderate": 3.5, "High": 4.5},
-      "Cycling": {"Low": 4.0, "Moderate": 6.8, "High": 10.0},
-      "Swimming": {"Low": 4.5, "Moderate": 6.0, "High": 8.0},
-      "Weight Lifting": {"Low": 3.0, "Moderate": 5.0, "High": 6.0},
-      "Jump Rope (Skipping)": {"Low": 7.0, "Moderate": 10.0, "High": 12.0},
-    };
-    if (!metMap.containsKey(exercise)) return 0;
-    final met = metMap[exercise]![intensity] ?? 5.0;
-    final durationHours = duration / 60.0;
-    return (met * weight * durationHours).round();
-  }
-
   int get customEstimatedCalories {
     final weight = dailyProgress?.currentWeight ?? 70.0;
-    final duration = int.tryParse(chosenDurationCtrl.text) ?? 0;
-    
-    String exerciseKey = chosenExercise;
-    if (exerciseKey == "Weight Training") {
-      exerciseKey = "Weight Lifting";
-    } else if (exerciseKey == "Jump Rope") {
-      exerciseKey = "Jump Rope (Skipping)";
-    }
-    
-    return _calculateEstimatedCalories(exerciseKey, duration, chosenIntensity, weight);
+    final amount = int.tryParse(chosenDurationCtrl.text) ?? 0;
+    return ExerciseService.calculateEstimatedCalories(
+      exerciseName: chosenExercise,
+      amount: amount,
+      intensity: chosenIntensity,
+      weight: weight,
+    );
   }
 
   Future<void> _logRecommendedExercise() async {
@@ -115,17 +94,19 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Future<void> _logCustomExercise() async {
-    final duration = int.tryParse(chosenDurationCtrl.text) ?? 0;
-    if (duration <= 0) {
+    final amount = int.tryParse(chosenDurationCtrl.text) ?? 0;
+    final isReps = ExerciseService.isRepetitionBased(chosenExercise);
+    final label = isReps ? "repetitions" : "duration";
+    if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid duration greater than 0.")),
+        SnackBar(content: Text("Please enter a valid $label greater than 0.")),
       );
       return;
     }
     setState(() => _isLoading = true);
     final response = await ExerciseService.logExercise(
       exerciseName: chosenExercise,
-      durationMinutes: duration,
+      durationMinutes: amount,
       intensity: chosenIntensity,
     );
     if (!mounted) return;
@@ -236,7 +217,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "$recommendedDuration minutes • $recommendedIntensity intensity",
+                                  recommendedIsReps
+                                      ? "$recommendedDuration repetitions • $recommendedIntensity intensity"
+                                      : "$recommendedDuration minutes • $recommendedIntensity intensity",
                                   style: TextStyle(color: Colors.grey.shade700, fontSize: 15),
                                 ),
                                 const SizedBox(height: 6),
@@ -313,14 +296,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                               borderSide: BorderSide(color: Colors.grey.shade300),
                             ),
                           ),
-                          items: [
-                            "Walking",
-                            "Running",
-                            "Cycling",
-                            "Swimming",
-                            "Weight Training",
-                            "Jump Rope"
-                          ].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+                          items: ExerciseService.getAllExercises()
+                              .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                              .toList(),
                           onChanged: (val) {
                             if (val != null) {
                               setState(() {
@@ -331,7 +309,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        const Text("Duration (minutes)", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          ExerciseService.isRepetitionBased(chosenExercise)
+                              ? "Repetitions"
+                              : "Duration (minutes)",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: chosenDurationCtrl,

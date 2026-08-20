@@ -343,7 +343,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
-                            "$duration mins · $intensity intensity",
+                            ExerciseService.isRepetitionBased(name)
+                                ? "$duration reps · $intensity intensity"
+                                : "$duration mins · $intensity intensity",
                             style: TextStyle(color: Colors.grey.shade600),
                           ),
                           trailing: Text(
@@ -550,7 +552,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                 final int eBurned = (e['calories_burned'] ?? 0).toInt();
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 6.0),
-                                  child: Text("• $name — $duration min — $intensity\n  Calories burned: $eBurned kcal", style: const TextStyle(fontSize: 14)),
+                                  child: Text(
+                                    ExerciseService.isRepetitionBased(name)
+                                        ? "• $name — $duration reps — $intensity\n  Calories burned: $eBurned kcal"
+                                        : "• $name — $duration min — $intensity\n  Calories burned: $eBurned kcal",
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                                 );
                               }),
                               
