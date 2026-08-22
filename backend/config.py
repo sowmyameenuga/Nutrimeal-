@@ -13,7 +13,17 @@ class Config:
 
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
-        db_url = "postgresql://nutrimeal_db_user:9KzZDtQKehdCwmkefUnFoX7Ljm21onP5@dpg-d9mnkj61egvs73ei202g.oregon-postgres.render.com/nutrimeal_db?sslmode=require"
+        import socket
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(2.0)
+            s.connect(("dpg-d9mnkj61egvs73ei202g.oregon-postgres.render.com", 5432))
+            s.close()
+            db_url = "postgresql://nutrimeal_db_user:9KzZDtQKehdCwmkefUnFoX7Ljm21onP5@dpg-d9mnkj61egvs73ei202g.oregon-postgres.render.com/nutrimeal_db?sslmode=require"
+        except Exception:
+            print("\n[Warning] Connection to Render PostgreSQL timed out (local network/firewall blocking port 5432).")
+            print("[Warning] Falling back to local SQLite database so the app can start.")
+            db_url = f"sqlite:///{os.path.join(BASE_DIR, 'nutrition_app.db')}"
         
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
