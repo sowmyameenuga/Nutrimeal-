@@ -46,6 +46,7 @@ def get_daily_progress():
         "water_target": water_target,
         "current_weight": log.current_weight if log and log.current_weight and log.current_weight > 0 else (profile.weight_kg if profile and profile.weight_kg else 0.0),
         "weight_goal": weight_goal,
+        "starting_weight": profile.weight_kg if profile and profile.weight_kg else 0.0,
     }
 
     return jsonify(result), 200
